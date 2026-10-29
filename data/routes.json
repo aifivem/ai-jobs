@@ -1,0 +1,128 @@
+{
+  "taxi": {
+    "label": "Downtown Cab Co.",
+    "kind": "random",
+    "job": "",
+    "depot": {
+      "x": 895.5,
+      "y": -179.2,
+      "z": 74.7
+    },
+    "vehicle": "taxi",
+    "spawn": {
+      "x": 911.1,
+      "y": -163.6,
+      "z": 74.4,
+      "heading": 195
+    },
+    "pay": 120,
+    "seconds": 4,
+    "item": "",
+    "stops": 8
+  },
+  "bus": {
+    "label": "Dashound Bus",
+    "kind": "ordered",
+    "job": "",
+    "depot": {
+      "x": 453.6,
+      "y": -602.5,
+      "z": 28.6
+    },
+    "vehicle": "bus",
+    "spawn": {
+      "x": 461.6,
+      "y": -616.2,
+      "z": 28.5,
+      "heading": 215
+    },
+    "pay": 60,
+    "seconds": 6,
+    "item": "",
+    "stops": 0
+  },
+  "trucker": {
+    "label": "Post OP Freight",
+    "kind": "random",
+    "job": "",
+    "depot": {
+      "x": -424.1,
+      "y": -2789.6,
+      "z": 6.0
+    },
+    "vehicle": "mule",
+    "spawn": {
+      "x": -445.5,
+      "y": -2790.2,
+      "z": 5.9,
+      "heading": 45
+    },
+    "pay": 250,
+    "seconds": 8,
+    "item": "",
+    "stops": 5
+  },
+  "garbage": {
+    "label": "Los Santos Sanitation",
+    "kind": "random",
+    "job": "",
+    "depot": {
+      "x": -321.7,
+      "y": -1545.9,
+      "z": 31.0
+    },
+    "vehicle": "trash",
+    "spawn": {
+      "x": -341.8,
+      "y": -1561.2,
+      "z": 25.2,
+      "heading": 60
+    },
+    "pay": 90,
+    "seconds": 6,
+    "item": "",
+    "stops": 10
+  },
+  "recycle": {
+    "label": "Recycling Center",
+    "kind": "gather",
+    "job": "",
+    "depot": {
+      "x": 55.6,
+      "y": 6472.1,
+      "z": 31.4
+    },
+    "vehicle": "",
+    "spawn": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "heading": 0
+    },
+    "pay": 0,
+    "seconds": 5,
+    "item": "scrapmetal",
+    "stops": 0
+  },
+  "vineyard": {
+    "label": "Marlowe Vineyard",
+    "kind": "gather",
+    "job": "",
+    "depot": {
+      "x": -1928.8,
+      "y": 2059.8,
+      "z": 140.8
+    },
+    "vehicle": "",
+    "spawn": {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "heading": 0
+    },
+    "pay": 0,
+    "seconds": 4,
+    "item": "grape",
+    "stops": 0
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "taxi_0": {
+    "route": "taxi",
+    "label": "Legion Square",
+    "coords": {
+      "x": 195.2,
+      "y": -934.3,
+      "z": 30.7
+    }
+  },
+  "taxi_1": {
+    "route": "taxi",
+    "label": "Pillbox Hill",
+    "coords": {
+      "x": 298.1,
+      "y": -584.2,
+      "z": 43.3
+    }
+  },
+  "taxi_2": {
+    "route": "taxi",
+    "label": "Vinewood Blvd",
+    "coords": {
+      "x": 301.2,
+      "y": 180.1,
+      "z": 103.9
+    }
+  },
+  "taxi_3": {
+    "route": "taxi",
+    "label": "Del Perro Pier",
+    "coords": {
+      "x": -1610.0,
+      "y": -1052.0,
+      "z": 13.0
+    }
+  },
+  "taxi_4": {
+    "route": "taxi",
+    "label": "LSIA",
+    "coords": {
+      "x": -1037.6,
+      "y": -2737.6,
+      "z": 20.2
+    }
+  },
+  "taxi_5": {
+    "route": "taxi",
+    "label": "Mirror Park",
+    "coords": {
+      "x": 1100.1,
+      "y": -400.3,
+      "z": 67.1
+    }
+  },
+  "taxi_6": {
+    "route": "taxi",
+    "label": "Grove Street",
+    "coords": {
+      "x": -50.3,
+      "y": -1800.4,
+      "z": 27.3
+    }
+  },
+  "taxi_7": {
+    "route": "taxi",
+    "label": "Rockford Hills",
+    "coords": {
+      "x": -700.2,
+      "y": -160.5,
+      "z": 37.6
+    }
+  },
+  "bus_0": {
+    "route": "bus",
+    "label": "Pillbox Hill stop",
+    "coords": {
+      "x": 307.3,
+      "y": -766.2,
+      "z": 29.2
+    }
+  },
+  "bus_1": {
+    "route": "bus",
+    "label": "Legion Square stop",
+    "coords": {
+      "x": 117.5,
+      "y": -783.3,
+      "z": 31.3
+    }
+  },
+  "bus_2": {
+    "route": "bus",
+    "label": "Alta stop",
+    "coords": {
+      "x": -109.0,
+      "y": -1014.6,
+      "z": 27.3
+    }
+  },
+  "bus_3": {
+    "route": "bus",
+    "label": "Strawberry stop",
+    "coords": {
+      "x": 269.3,
+      "y": -1250.7,
+      "z": 29.1
+    }
+  },
+  "bus_4": {
+    "route": "bus",
+    "label": "Davis stop",
+    "coords": {
+      "x": 115.7,
+      "y": -1588.6,
+      "z": 29.2
+    }
+  },
+  "trucker_0": {
+    "route": "trucker",
+    "label": "Cypress Flats warehouse",
+    "coords": {
+      "x": 821.0,
+      "y": -2149.0,
+      "z": 28.6
+    }
+  },
+  "trucker_1": {
+    "route": "trucker",
+    "label": "Elysian Island",
+    "coords": {
+      "x": 213.7,
+      "y": -3121.2,
+      "z": 5.8
+    }
+  },
+  "trucker_2": {
+    "route": "trucker",
+    "label": "La Mesa depot",
+    "coords": {
+      "x": 920.2,
+      "y": -1543.2,
+      "z": 30.6
+    }
+  },
+  "trucker_3": {
+    "route": "trucker",
+    "label": "Murrieta Heights",
+    "coords": {
+      "x": 1210.2,
+      "y": -1388.3,
+      "z": 35.2
+    }
+  },
+  "trucker_4": {
+    "route": "trucker",
+    "label": "Textile City",
+    "coords": {
+      "x": 458.6,
+      "y": -879.0,
+      "z": 27.7
+    }
+  },
+  "garbage_0": {
+    "route": "garbage",
+    "label": "Strawberry bins",
+    "coords": {
+      "x": 226.2,
+      "y": -1500.8,
+      "z": 29.1
+    }
+  },
+  "garbage_1": {
+    "route": "garbage",
+    "label": "Davis bins",
+    "coords": {
+      "x": 126.2,
+      "y": -1650.0,
+      "z": 29.1
+    }
+  },
+  "garbage_2": {
+    "route": "garbage",
+    "label": "Little Seoul bins",
+    "coords": {
+      "x": -597.1,
+      "y": -1062.8,
+      "z": 22.3
+    }
+  },
+  "garbage_3": {
+    "route": "garbage",
+    "label": "Vespucci bins",
+    "coords": {
+      "x": -1155.5,
+      "y": -1353.0,
+      "z": 5.0
+    }
+  },
+  "garbage_4": {
+    "route": "garbage",
+    "label": "Mission Row bins",
+    "coords": {
+      "x": 410.1,
+      "y": -1000.2,
+      "z": 29.2
+    }
+  },
+  "recycle_0": {
+    "route": "recycle",
+    "label": "Scrap pile",
+    "coords": {
+      "x": 62.3,
+      "y": 6466.4,
+      "z": 31.4
+    }
+  },
+  "recycle_1": {
+    "route": "recycle",
+    "label": "Scrap pile",
+    "coords": {
+      "x": 58.1,
+      "y": 6461.0,
+      "z": 31.4
+    }
+  },
+  "recycle_2": {
+    "route": "recycle",
+    "label": "Scrap pile",
+    "coords": {
+      "x": 50.5,
+      "y": 6469.5,
+      "z": 31.4
+    }
+  },
+  "vineyard_0": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1880.2,
+      "y": 2100.5,
+      "z": 139.0
+    }
+  },
+  "vineyard_1": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1862.4,
+      "y": 2110.3,
+      "z": 136.2
+    }
+  },
+  "vineyard_2": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1845.0,
+      "y": 2120.0,
+      "z": 133.5
+    }
+  },
+  "vineyard_3": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1830.6,
+      "y": 2130.2,
+      "z": 130.8
+    }
+  }
+}
