@@ -5,7 +5,7 @@
   "description": "Work routes: taxi, bus, trucker, garbage, recycling, vineyard, diving",
   "license": "GPL-3.0-only",
   "author": {
-    "name": "ai-core"
+    "name": "TGIANN"
   },
   "repository": "github:TGIANN/ai-jobs",
   "type": "module",
