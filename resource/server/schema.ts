@@ -42,6 +42,7 @@ export const jobsSchema: PanelSchema = {
       listSub: "kind",
       createLabel: "ADMIN_NEW_ROUTE",
       deleteLabel: "ADMIN_DELETE_ROUTE",
+      deleteDesc: "ADMIN_DELETE_ROUTE_DESC",
       cards: [
         {
           icon: "briefcase",

@@ -21,7 +21,7 @@
   "ADMIN_TAB_ROUTES": "Routes",
   "ADMIN_TAB_ROUTES_DESC": "Jobs anyone (or a job's members) can start at a depot: driving routes and gathering.",
   "ADMIN_NEW_ROUTE": "New route",
-  "ADMIN_DELETE_ROUTE": "Delete this route? Its stops stay and can be reused.",
+  "ADMIN_DELETE_ROUTE": "Delete route",
   "ADMIN_C_ROUTE": "Route",
   "ADMIN_C_ROUTE_DESC": "Where the work starts and how the stops follow each other.",
   "ADMIN_F_LABEL": "Name",
@@ -56,7 +56,7 @@
   "ADMIN_TAB_STOPS": "Stops",
   "ADMIN_TAB_STOPS_DESC": "The places a route visits; each stop names its route.",
   "ADMIN_NEW_STOP": "New stop",
-  "ADMIN_DELETE_STOP": "Delete this stop?",
+  "ADMIN_DELETE_STOP": "Delete stop",
   "ADMIN_C_STOP": "Stop",
   "ADMIN_C_STOP_DESC": "Stand at the place and use your position.",
   "ADMIN_F_ROUTE": "Route",
@@ -66,5 +66,6 @@
   "ADMIN_P_STOP_LABEL": "Legion Square",
   "ADMIN_F_COORDS": "Place",
   "ADMIN_H_COORDS": "Where the worker stops.",
-  "ADMIN_O_TOW": "Towing broken-down cars"
+  "ADMIN_O_TOW": "Towing broken-down cars",
+  "ADMIN_DELETE_ROUTE_DESC": "Its stops stay and can be reused."
 }
