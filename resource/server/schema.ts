@@ -1,4 +1,4 @@
-import type { PanelSchema } from "@aicore-fivem/shared"
+import type { PanelSchema } from "@aicore-fivem/shared";
 
 /** ai-jobs' panel: work routes and their stops (each stop its own record so its place is set in the world). */
 export const jobsSchema: PanelSchema = {
@@ -205,4 +205,4 @@ export const jobsSchema: PanelSchema = {
       ],
     },
   ],
-}
+};
