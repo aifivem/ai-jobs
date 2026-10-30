@@ -1,3 +1,4 @@
+import { PLACE_PED_SPEC, placePedFields } from "@aicore-fivem/lib/shared";
 import type { PanelSchema } from "@aicore-fivem/shared";
 
 /** ai-jobs' panel: work routes and their stops (each stop its own record so its place is set in the world). */
@@ -22,6 +23,7 @@ export const jobsSchema: PanelSchema = {
         stops: 5,
       },
       sections: {
+        ped: PLACE_PED_SPEC,
         label: { type: "text", min: 1, max: 48 },
         kind: { type: "enum", values: ["ordered", "random", "gather", "tow"] },
         job: { type: "text", lookup: "job", min: 0, max: 32 },
@@ -161,6 +163,12 @@ export const jobsSchema: PanelSchema = {
               placeholder: "ADMIN_P_ITEM",
             },
           ],
+        },
+        {
+          icon: "user",
+          title: "ADMIN_C_PED",
+          desc: "ADMIN_C_PED_DESC",
+          fields: placePedFields(),
         },
       ],
     },

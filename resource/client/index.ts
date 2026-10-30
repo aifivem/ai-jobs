@@ -35,6 +35,7 @@ class Work {
     this.depots.clear();
     for (const route of readRoutes(world.get("routes")).values()) {
       this.depots.add(`start:${route.id}`, {
+        ped: route.ped ?? undefined,
         coords: route.depot,
         label: Locale("JOBS_PROMPT_START", route.label),
         icon: "briefcase",

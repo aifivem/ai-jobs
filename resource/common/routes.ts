@@ -1,11 +1,4 @@
-import {
-  int,
-  num,
-  record,
-  str,
-  vec4,
-  type Vec4,
-} from "@aicore-fivem/lib/shared";
+import { int, num, record, str, vec4, type Vec4, readPlacePed, type PlacePed } from "@aicore-fivem/lib/shared";
 
 /** ai-jobs' contracts and panel content. No natives. */
 
@@ -29,6 +22,8 @@ export const EVENTS = {
 } as const;
 
 export interface Route {
+  /** NPC standing at the place (panel), null for none. */
+  ped: PlacePed | null;
   id: string;
   label: string;
   kind: RouteKind;
@@ -73,6 +68,7 @@ export function readRoutes(raw: unknown): Map<string, Route> {
     const v = record(value);
     const d = record(v.depot);
     out.set(id, {
+      ped: readPlacePed(v.ped),
       id,
       label: str(v.label, id, 48),
       kind: KINDS.includes(v.kind as RouteKind)
