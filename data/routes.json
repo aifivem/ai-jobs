@@ -124,5 +124,26 @@
     "seconds": 4,
     "item": "grape",
     "stops": 0
+  },
+  "diving": {
+    "label": "Del Perro Diving",
+    "kind": "gather",
+    "job": "",
+    "depot": {
+      "x": -1684.13,
+      "y": -1068.91,
+      "z": 13.15
+    },
+    "vehicle": "",
+    "spawn": {
+      "x": -1684.13,
+      "y": -1068.91,
+      "z": 13.15,
+      "heading": 100
+    },
+    "pay": 0,
+    "seconds": 8,
+    "item": "coral",
+    "stops": 7
   }
 }

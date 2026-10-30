@@ -196,6 +196,8 @@ try{
 	const MENU_EVENTS = {
 		/** Client local: (resource, requestId, itemId | null) the player picked an item or closed the menu. */
 		menuResult: "ai-core:client:menuResult",
+		/** Client local: (resource, requestId, itemId) the pointer or focus is on an item (previews). */
+		menuHover: "ai-core:client:menuHover",
 		/** Client local: (resource, requestId, values | null) the player confirmed or closed the input dialog. */
 		inputResult: "ai-core:client:inputResult"
 	};
@@ -548,19 +550,25 @@ try{
 	var Requests = class {
 		resource = GetCurrentResourceName();
 		waiting = /* @__PURE__ */ new Map();
+		hovers = /* @__PURE__ */ new Map();
 		nextId = 0;
 		constructor() {
 			const answer = (owner, id, value) => {
 				if (owner !== this.resource || typeof id !== "number") return;
 				this.waiting.get(id)?.(value);
 				this.waiting.delete(id);
+				this.hovers.delete(id);
 			};
+			on(MENU_EVENTS.menuHover, (owner, id, item) => {
+				if (owner === this.resource && typeof id === "number" && typeof item === "string") this.hovers.get(id)?.(item);
+			});
 			on(MENU_EVENTS.menuResult, answer);
 			on(MENU_EVENTS.inputResult, answer);
 		}
-		ask(open, read) {
+		ask(open, read, onHover) {
 			const id = ++this.nextId;
 			this.waiting.set(id, read);
+			if (onHover) this.hovers.set(id, onHover);
 			open(id);
 		}
 	};
@@ -763,7 +771,7 @@ try{
 			if (!await progress({
 				label: Locale("JOBS_WORKING"),
 				duration: seconds * 1e3,
-				anim: gather ? {
+				anim: gather && !IsPedSwimmingUnderWater(cache.ped) ? {
 					dict: "amb@prop_human_bum_bin@base",
 					clip: "base"
 				} : void 0,

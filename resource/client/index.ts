@@ -80,7 +80,7 @@ class Work {
     const ok = await progress({
       label: Locale("JOBS_WORKING"),
       duration: seconds * 1000,
-      anim: gather ? { dict: "amb@prop_human_bum_bin@base", clip: "base" } : undefined,
+      anim: gather && !IsPedSwimmingUnderWater(cache.ped) ? { dict: "amb@prop_human_bum_bin@base", clip: "base" } : undefined,
       allowVehicle: !gather,
     });
     if (!ok) return;

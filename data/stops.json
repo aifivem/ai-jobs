@@ -268,5 +268,68 @@
       "y": 2130.2,
       "z": 130.8
     }
+  },
+  "diving_1": {
+    "route": "diving",
+    "label": "Coral reef 1",
+    "coords": {
+      "x": -1876.6805,
+      "y": -1184.799,
+      "z": -17.84077
+    }
+  },
+  "diving_2": {
+    "route": "diving",
+    "label": "Coral reef 2",
+    "coords": {
+      "x": -1887.7748,
+      "y": -1196.6993,
+      "z": -23.067642
+    }
+  },
+  "diving_3": {
+    "route": "diving",
+    "label": "Coral reef 3",
+    "coords": {
+      "x": -1882.6532,
+      "y": -1201.3375,
+      "z": -18.995111
+    }
+  },
+  "diving_4": {
+    "route": "diving",
+    "label": "Coral reef 4",
+    "coords": {
+      "x": -1903.2726,
+      "y": -1208.6017,
+      "z": -22.02567
+    }
+  },
+  "diving_5": {
+    "route": "diving",
+    "label": "Coral reef 5",
+    "coords": {
+      "x": -1906.6615,
+      "y": -1213.6461,
+      "z": -19.387955
+    }
+  },
+  "diving_6": {
+    "route": "diving",
+    "label": "Coral reef 6",
+    "coords": {
+      "x": -1938.5804,
+      "y": -1160.3507,
+      "z": -25.577545
+    }
+  },
+  "diving_7": {
+    "route": "diving",
+    "label": "Coral reef 7",
+    "coords": {
+      "x": -1949.4926,
+      "y": -1133.7306,
+      "z": -26.983402
+    }
   }
 }
