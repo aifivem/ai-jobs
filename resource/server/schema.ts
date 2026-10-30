@@ -1,4 +1,8 @@
-import { PLACE_PED_SPEC, placePedFields } from "@aicore-fivem/lib/shared";
+import {
+  BLIP_STYLE_FIELDS,
+  PLACE_PED_SPEC,
+  placePedFields,
+} from "@aicore-fivem/lib/shared";
 import type { PanelSchema } from "@aicore-fivem/shared";
 import { DEFAULT_TOW_MODELS } from "common/routes";
 
@@ -71,11 +75,7 @@ export const jobsSchema: PanelSchema = {
         blip: {
           type: "object",
           optional: true,
-          fields: {
-            sprite: { type: "number", min: 0, max: 1000, integer: true },
-            color: { type: "number", min: 0, max: 100, integer: true },
-            scale: { type: "number", min: 0.3, max: 2 },
-          },
+          fields: BLIP_STYLE_FIELDS,
         },
       },
     },

@@ -1,13 +1,14 @@
 import {
   int,
   num,
+  type PlacePed,
+  readBlipStyle,
+  readId,
+  readPlacePed,
   record,
   str,
   vec4,
   type Vec4,
-  readId,
-  readPlacePed,
-  type PlacePed,
 } from "@aicore-fivem/lib/shared";
 
 /** ai-jobs' contracts and panel content. No natives. */
@@ -135,11 +136,7 @@ export function readRoutes(raw: unknown): Map<string, Route> {
       gatherMin,
       gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
       towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
-      blip: {
-        sprite: int(blip.sprite, KIND_SPRITE[kind], 0, 1000),
-        color: int(blip.color, 5, 0, 100),
-        scale: num(blip.scale, 0.65, 0.3, 2),
-      },
+      blip: readBlipStyle(blip, { sprite: KIND_SPRITE[kind], color: 5, scale: 0.65 }),
     });
   }
   return out;
