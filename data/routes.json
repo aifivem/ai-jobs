@@ -1,4 +1,5 @@
 {
+  "$schema": "./schemas/routes.schema.json",
   "taxi": {
     "label": "Downtown Cab Co.",
     "kind": "random",
@@ -48,7 +49,7 @@
     "depot": {
       "x": -424.1,
       "y": -2789.6,
-      "z": 6.0
+      "z": 6
     },
     "vehicle": "mule",
     "spawn": {
@@ -69,7 +70,7 @@
     "depot": {
       "x": -321.7,
       "y": -1545.9,
-      "z": 31.0
+      "z": 31
     },
     "vehicle": "trash",
     "spawn": {
@@ -178,9 +179,9 @@
     },
     "vehicle": "rumpo",
     "spawn": {
-      "x": -557.0,
+      "x": -557,
       "y": -925.25,
-      "z": 24.0,
+      "z": 24,
       "heading": 89
     },
     "pay": 180,

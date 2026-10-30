@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai-jobs/data/routes.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's JSON Schema (for editors)."
+    }
+  },
+  "patternProperties": {
+    "^[a-z0-9_]{2,32}$": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "description": "Name",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 48
+        },
+        "kind": {
+          "description": "Kind: Random: the next stop is any other stop (taxi, trucker, news). In order: stops one after the other (bus). Gather: on foot, items at each stop. Towing: a broken-down car waits at the stop, load it and bring it to the depot.",
+          "enum": [
+            "ordered",
+            "random",
+            "gather",
+            "tow"
+          ]
+        },
+        "job": {
+          "description": "Needed job: Empty: anyone can work here.",
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 32
+        },
+        "depot": {
+          "description": "Depot: Where players start and stop working.",
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
+        },
+        "vehicle": {
+          "description": "Vehicle model: Spawn name (taxi, bus, mule, trash). Empty: no vehicle.",
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 32
+        },
+        "spawn": {
+          "description": "Vehicle spawn",
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "z",
+            "heading"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            },
+            "heading": {
+              "type": "number"
+            }
+          }
+        },
+        "pay": {
+          "description": "Pay per stop: Paid to the bank after each stop.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "seconds": {
+          "description": "Time per stop: How long the work at a stop takes.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "item": {
+          "description": "Item per stop: One to three of this item per stop.",
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 48
+        },
+        "stops": {
+          "description": "Stops per shift: 0 means the shift goes on until the player stops.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "label",
+        "kind",
+        "job",
+        "depot",
+        "vehicle",
+        "spawn",
+        "pay",
+        "seconds",
+        "item",
+        "stops"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

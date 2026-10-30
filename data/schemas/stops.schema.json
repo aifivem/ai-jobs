@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai-jobs/data/stops.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's JSON Schema (for editors)."
+    }
+  },
+  "patternProperties": {
+    "^[a-z0-9_]{2,48}$": {
+      "type": "object",
+      "properties": {
+        "route": {
+          "description": "Route: The id of the route this stop belongs to (taxi, bus...).",
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32
+        },
+        "label": {
+          "description": "Name",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 48
+        },
+        "coords": {
+          "description": "Place: Where the worker stops.",
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "required": [
+        "route",
+        "label",
+        "coords"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

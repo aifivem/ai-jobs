@@ -1,4 +1,5 @@
 {
+  "$schema": "./schemas/stops.schema.json",
   "taxi_0": {
     "route": "taxi",
     "label": "Legion Square",
@@ -30,9 +31,9 @@
     "route": "taxi",
     "label": "Del Perro Pier",
     "coords": {
-      "x": -1610.0,
-      "y": -1052.0,
-      "z": 13.0
+      "x": -1610,
+      "y": -1052,
+      "z": 13
     }
   },
   "taxi_4": {
@@ -93,7 +94,7 @@
     "route": "bus",
     "label": "Alta stop",
     "coords": {
-      "x": -109.0,
+      "x": -109,
       "y": -1014.6,
       "z": 27.3
     }
@@ -120,8 +121,8 @@
     "route": "trucker",
     "label": "Cypress Flats warehouse",
     "coords": {
-      "x": 821.0,
-      "y": -2149.0,
+      "x": 821,
+      "y": -2149,
       "z": 28.6
     }
   },
@@ -157,7 +158,7 @@
     "label": "Textile City",
     "coords": {
       "x": 458.6,
-      "y": -879.0,
+      "y": -879,
       "z": 27.7
     }
   },
@@ -175,7 +176,7 @@
     "label": "Davis bins",
     "coords": {
       "x": 126.2,
-      "y": -1650.0,
+      "y": -1650,
       "z": 29.1
     }
   },
@@ -193,8 +194,8 @@
     "label": "Vespucci bins",
     "coords": {
       "x": -1155.5,
-      "y": -1353.0,
-      "z": 5.0
+      "y": -1353,
+      "z": 5
     }
   },
   "garbage_4": {
@@ -220,7 +221,7 @@
     "label": "Scrap pile",
     "coords": {
       "x": 58.1,
-      "y": 6461.0,
+      "y": 6461,
       "z": 31.4
     }
   },
@@ -239,7 +240,7 @@
     "coords": {
       "x": -1880.2,
       "y": 2100.5,
-      "z": 139.0
+      "z": 139
     }
   },
   "vineyard_1": {
@@ -255,8 +256,8 @@
     "route": "vineyard",
     "label": "Grape vines",
     "coords": {
-      "x": -1845.0,
-      "y": 2120.0,
+      "x": -1845,
+      "y": 2120,
       "z": 133.5
     }
   },
@@ -543,26 +544,26 @@
     "route": "news",
     "label": "Del Perro Pier",
     "coords": {
-      "x": -1640.0,
-      "y": -1010.0,
-      "z": 13.0
+      "x": -1640,
+      "y": -1010,
+      "z": 13
     }
   },
   "news_3": {
     "route": "news",
     "label": "Maze Bank Arena",
     "coords": {
-      "x": -250.0,
-      "y": -2000.0,
-      "z": 30.0
+      "x": -250,
+      "y": -2000,
+      "z": 30
     }
   },
   "news_4": {
     "route": "news",
     "label": "Vespucci Beach",
     "coords": {
-      "x": -1380.0,
-      "y": -1300.0,
+      "x": -1380,
+      "y": -1300,
       "z": 4.5
     }
   },
@@ -570,17 +571,17 @@
     "route": "news",
     "label": "Mirror Park",
     "coords": {
-      "x": 1100.0,
-      "y": -640.0,
-      "z": 57.0
+      "x": 1100,
+      "y": -640,
+      "z": 57
     }
   },
   "news_6": {
     "route": "news",
     "label": "Galileo Observatory",
     "coords": {
-      "x": -410.0,
-      "y": 1170.0,
+      "x": -410,
+      "y": 1170,
       "z": 325.8
     }
   },
@@ -588,18 +589,18 @@
     "route": "news",
     "label": "Vinewood Boulevard",
     "coords": {
-      "x": 300.0,
-      "y": 180.0,
-      "z": 104.0
+      "x": 300,
+      "y": 180,
+      "z": 104
     }
   },
   "news_8": {
     "route": "news",
     "label": "Los Santos Airport",
     "coords": {
-      "x": -1035.0,
-      "y": -2730.0,
-      "z": 20.0
+      "x": -1035,
+      "y": -2730,
+      "z": 20
     }
   }
 }
