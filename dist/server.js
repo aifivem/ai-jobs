@@ -178,6 +178,19 @@ const ADMIN = {
 	worldChangesCallback: (resource) => `${resource}:admin:worldChanges`
 };
 
+// ../../../packages/shared/src/vehicles.ts
+/** Entity state bags ai-vehicles sets on a spawned owned vehicle. */
+const VEHICLE_BAGS = {
+	/** true: an owned vehicle. */
+	owned: "ai:owned",
+	/** Its id in ai-vehicles. */
+	id: "ai:vid",
+	/** VehicleProps; the entity's owner client applies them. */
+	props: "ai:props",
+	/** 0-100, kept by a fuel resource. */
+	fuel: "fuel"
+};
+
 // ../../../packages/lib/src/shared/wait.ts
 /**
 * Resolves with the first value `check` returns that is not undefined, checking once per tick.
@@ -315,6 +328,8 @@ function loadLocaleTexts(resource = GetCurrentResourceName()) {
 */
 const requestEvent = (name) => `aicore:cb:${name}`;
 const responseEvent = (resource) => `aicore:cbr:${resource}`;
+/** Default time a caller waits for an answer before the promise rejects. */
+const DEFAULT_CALLBACK_TIMEOUT = 3e4;
 
 // ../../../packages/lib/src/server/gate.ts
 const core$7 = resourceExport(CORE.resource);
@@ -392,6 +407,7 @@ function onClientCallback(name, first, second) {
 	});
 }
 const pending = /* @__PURE__ */ new Map();
+let nextId = 0;
 onNet(responseEvent(resource$4), (id, ok, result) => {
 	const entry = typeof id === "number" ? pending.get(id) : void 0;
 	if (!entry || entry.source !== Number(globalThis.source)) return;
@@ -400,6 +416,23 @@ onNet(responseEvent(resource$4), (id, ok, result) => {
 	if (ok === true) entry.resolve(result);
 	else entry.reject(/* @__PURE__ */ new Error("client callback failed"));
 });
+/** Asks one player's client (`onServerCallback(name, ...)` there) and resolves with its answer (unknown: parse it). */
+function triggerClientCallback(name, source, args = [], timeoutMs = DEFAULT_CALLBACK_TIMEOUT) {
+	const id = ++nextId;
+	return new Promise((resolve, reject) => {
+		const timer = setTimeout(() => {
+			pending.delete(id);
+			reject(/* @__PURE__ */ new Error(`client callback ${name} timed out for ${source}`));
+		}, timeoutMs);
+		pending.set(id, {
+			source,
+			resolve,
+			reject,
+			timer
+		});
+		emitNet(requestEvent(name), source, resource$4, id, ...args);
+	});
+}
 
 // ../../../packages/lib/src/server/admin/patch.ts
 /** A patch from a client: only the three known shapes pass, extra fields drop. */
@@ -851,6 +884,52 @@ const vehicleKeys = {
 	/** Whether a player holds the keys; true when the key system cannot tell or none runs. */
 	has: (source, vehicle) => core$2.HasVehicleKeys(source, vehicle)
 };
+
+// ../../../packages/lib/src/server/vehicle.ts
+/** Every type `CreateVehicleServerSetter` takes; a client answering anything else is ignored. */
+const TYPES = /* @__PURE__ */ new Set([
+	"automobile",
+	"bike",
+	"boat",
+	"heli",
+	"plane",
+	"submarine",
+	"trailer",
+	"train"
+]);
+/** Model -> spawn type, learned from clients once per model (the server cannot read a vehicle class). */
+const types = /* @__PURE__ */ new Map();
+/**
+* The `CreateVehicleServerSetter` type of a model asked from a player's client (ai-core answers); null: no such
+* vehicle. Only a valid type is cached: "no such model" is asked again, so one modified client cannot block a model.
+*/
+async function vehicleType(model, asker) {
+	const known = types.get(model);
+	if (known !== void 0) return known;
+	const answer = await triggerClientCallback(CORE.vehicleTypeCallback, asker, [model]).catch(() => null);
+	if (typeof answer !== "string" || !TYPES.has(answer)) return null;
+	types.set(model, answer);
+	return answer;
+}
+/**
+* Creates a networked vehicle on the server (strict entity lockdown) and sets it up in one step: plate, fuel, state
+* bags, keys for its purpose, a driver. Resolves the entity, or null when the model does not exist or creation failed.
+*/
+async function spawnVehicle(options) {
+	const type = options.asker !== void 0 ? await vehicleType(options.model, options.asker) : options.type ?? "automobile";
+	if (!type) return null;
+	const { x, y, z, heading } = options.coords;
+	const vehicle = CreateVehicleServerSetter(GetHashKey(options.model), type, x, y, z, heading);
+	if (!await waitFor(() => DoesEntityExist(vehicle) || void 0, 5e3).catch(() => false)) return null;
+	if (options.persistent !== false) SetEntityOrphanMode(vehicle, 2);
+	if (options.plate) SetVehicleNumberPlateText(vehicle, options.plate.slice(0, 8));
+	const state = Entity(vehicle).state;
+	if (options.fuel !== void 0) state.set(VEHICLE_BAGS.fuel, options.fuel, true);
+	for (const [key, value] of Object.entries(options.bags ?? {})) state.set(key, value, true);
+	if (options.driver !== void 0) SetPedIntoVehicle(GetPlayerPed(String(options.driver)), vehicle, -1);
+	if (options.keysTo !== void 0) vehicleKeys.give(options.keysTo, vehicle, options.purpose ?? "temporary");
+	return vehicle;
+}
 
 // ../../../packages/lib/src/server/proximity.ts
 /**
@@ -25238,8 +25317,17 @@ const TOW_MODELS = [
 ];
 async function spawnTowed(stop) {
 	const model = TOW_MODELS[Math.floor(Math.random() * TOW_MODELS.length)] ?? "asea";
-	const car = CreateVehicleServerSetter(GetHashKey(model), "automobile", stop.x, stop.y, stop.z, Math.random() * 360);
-	if (!await waitFor(() => DoesEntityExist(car) || void 0, 5e3).catch(() => false)) return 0;
+	const car = await spawnVehicle({
+		model,
+		type: "automobile",
+		coords: {
+			x: stop.x,
+			y: stop.y,
+			z: stop.z,
+			heading: Math.random() * 360
+		}
+	});
+	if (car === null) return 0;
 	SetVehicleDoorsLocked(car, 2);
 	return car;
 }
@@ -25299,11 +25387,15 @@ onClientCallback(EVENTS.start, {
 	if (!first) return fail("JOBS_ERR_NO_STOPS");
 	let vehicle = null;
 	if (route.vehicle && route.kind !== "gather") {
-		const s = route.spawn;
-		vehicle = CreateVehicleServerSetter(GetHashKey(route.vehicle), "automobile", s.x, s.y, s.z, s.heading);
-		if (!await waitFor(() => DoesEntityExist(vehicle ?? 0) || void 0, 5e3).catch(() => false)) return fail("JOBS_ERR_VEHICLE");
-		SetVehicleNumberPlateText(vehicle, `WORK${source}`.slice(0, 8));
-		vehicleKeys.give(source, vehicle, "job");
+		vehicle = await spawnVehicle({
+			model: route.vehicle,
+			asker: source,
+			coords: route.spawn,
+			plate: `WORK${source}`,
+			keysTo: source,
+			purpose: "job"
+		});
+		if (vehicle === null) return fail("JOBS_ERR_VEHICLE");
 	}
 	const towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
 	shifts.set(source, {

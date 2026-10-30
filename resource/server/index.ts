@@ -1,5 +1,4 @@
-import { AdminPanel, aiLog, aiLogChannels, inventory, notify, onClientCallback, resourceExport, vehicleKeys } from "@aicore-fivem/lib/server";
-import { waitFor } from "@aicore-fivem/lib/shared";
+import { AdminPanel, aiLog, aiLogChannels, inventory, notify, onClientCallback, resourceExport, spawnVehicle } from "@aicore-fivem/lib/server";
 import { Locale, ResourceName } from "common";
 import { EVENTS, readRoutes, readStops, type Route, type Shift, type Stop } from "common/routes";
 import { jobsSchema } from "./schema";
@@ -38,8 +37,8 @@ const TOW_MODELS = ["asea", "premier", "emperor", "blista", "ingot", "stanier", 
 
 async function spawnTowed(stop: Stop): Promise<number> {
   const model = TOW_MODELS[Math.floor(Math.random() * TOW_MODELS.length)] ?? "asea";
-  const car = CreateVehicleServerSetter(GetHashKey(model), "automobile", stop.x, stop.y, stop.z, Math.random() * 360);
-  if (!(await waitFor(() => DoesEntityExist(car) || undefined, 5000).catch(() => false))) return 0;
+  const car = await spawnVehicle({ model, type: "automobile", coords: { x: stop.x, y: stop.y, z: stop.z, heading: Math.random() * 360 } });
+  if (car === null) return 0;
   SetVehicleDoorsLocked(car, 2);
   return car;
 }
@@ -86,12 +85,8 @@ onClientCallback(EVENTS.start, { args: ([id]) => (typeof id === "string" ? [id] 
   if (!first) return fail("JOBS_ERR_NO_STOPS");
   let vehicle: number | null = null;
   if (route.vehicle && route.kind !== "gather") {
-    const s = route.spawn;
-    vehicle = CreateVehicleServerSetter(GetHashKey(route.vehicle), "automobile", s.x, s.y, s.z, s.heading);
-    const ok = await waitFor(() => DoesEntityExist(vehicle ?? 0) || undefined, 5000).catch(() => false);
-    if (!ok) return fail("JOBS_ERR_VEHICLE");
-    SetVehicleNumberPlateText(vehicle, `WORK${source}`.slice(0, 8));
-    vehicleKeys.give(source, vehicle, "job");
+    vehicle = await spawnVehicle({ model: route.vehicle, asker: source, coords: route.spawn, plate: `WORK${source}`, keysTo: source, purpose: "job" });
+    if (vehicle === null) return fail("JOBS_ERR_VEHICLE");
   }
   const towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
   shifts.set(source, { route, stop: first.stop, done: 0, vehicle, index: first.index, since: Date.now(), towed, loaded: false });

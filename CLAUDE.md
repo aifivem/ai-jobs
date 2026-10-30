@@ -13,9 +13,9 @@ Work routes started at a depot: driving routes (taxi, bus, trucker, garbage, new
 ## Contracts
 
 - Callbacks and the server -> worker `shift` event: `resource/common/routes.ts`.
-- Work vehicle: server-created, plate `WORK<source>`, key through ai-vehiclekeys `GiveKeys`, deleted when the shift ends.
+- Work vehicle: lib `spawnVehicle` (spawn type from the worker's client), plate `WORK<source>`, keys through lib `vehicleKeys` with purpose `job`, deleted when the shift ends.
 - Towing: the server sends `attach` to `NetworkGetEntityOwner` of the towed car (fallback: the worker); the towed car is deleted at the depot or when the shift ends.
 
 ## Entry points
 
-- Shift logic `resource/server/index.ts`, panel `resource/server/schema.ts`; depots, stop blip and zone `resource/client/index.ts`.
+- Shift logic `resource/server/index.ts`, panel `resource/server/schema.ts`; depot and stop points (lib `Points`), stop route blip `resource/client/index.ts`.

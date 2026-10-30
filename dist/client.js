@@ -104,7 +104,7 @@ try{
 	const resource$1 = GetCurrentResourceName();
 	const log$3 = createLogger(resource$1);
 	const pending = /* @__PURE__ */ new Map();
-	let nextId = 0;
+	let nextId$1 = 0;
 	onNet(responseEvent(resource$1), (id, ok, result) => {
 		if (!fromServer()) return;
 		const entry = typeof id === "number" ? pending.get(id) : void 0;
@@ -119,7 +119,7 @@ try{
 	* parse it. Rejects when the server reports an error or does not answer within `timeoutMs`.
 	*/
 	function triggerServerCallback(name, args = [], timeoutMs = DEFAULT_CALLBACK_TIMEOUT) {
-		const id = ++nextId;
+		const id = ++nextId$1;
 		return new Promise((resolve, reject) => {
 			const timer = setTimeout(() => {
 				pending.delete(id);
@@ -501,6 +501,16 @@ try{
 	function resourceExport(resource) {
 		return globalThis.exports[resource];
 	}
+	/** Whether a resource is running now. */
+	function isResourceStarted(resource) {
+		return GetResourceState(resource) === "started";
+	}
+	/** Calls an export of a resource whose exports have no type here (a third-party script); parse the result. */
+	function callExport(resource, name, ...args) {
+		const fn = Reflect.get(Object(globalThis.exports[resource]), name);
+		if (typeof fn !== "function") throw new Error(`${resource} has no export ${name}`);
+		return Reflect.apply(fn, void 0, args);
+	}
 
 // ../../../packages/lib/src/client/prompt.ts
 	const core$3 = resourceExport(CORE.resource);
@@ -526,9 +536,59 @@ try{
 // ../../../packages/lib/src/client/blip.ts
 	const LABEL = `AI_BLIP_${GetCurrentResourceName()}`;
 	AddTextEntry(LABEL, "~a~");
+	/** Creates a named blip at a point and returns its handle (`RemoveBlip` it, or use `Blips`). */
+	function createBlip(options) {
+		const { x, y, z } = options.coords;
+		const blip = AddBlipForCoord(x, y, z);
+		SetBlipSprite(blip, options.sprite);
+		SetBlipColour(blip, options.color);
+		SetBlipScale(blip, options.scale ?? .8);
+		SetBlipDisplay(blip, options.display ?? 4);
+		SetBlipAsShortRange(blip, options.shortRange ?? true);
+		if (options.label !== void 0) {
+			BeginTextCommandSetBlipName(LABEL);
+			AddTextComponentSubstringPlayerName(options.label);
+			EndTextCommandSetBlipName(blip);
+		}
+		return blip;
+	}
+	/** A script's blips by id: `add` replaces a blip with the same id, `clear` removes them all (a panel rebuild). */
+	var Blips = class {
+		blips = /* @__PURE__ */ new Map();
+		add(id, options) {
+			this.remove(id);
+			const blip = createBlip(options);
+			this.blips.set(id, blip);
+			return blip;
+		}
+		get(id) {
+			return this.blips.get(id);
+		}
+		remove(id) {
+			const blip = this.blips.get(id);
+			if (blip === void 0) return;
+			RemoveBlip(blip);
+			this.blips.delete(id);
+		}
+		clear() {
+			for (const blip of this.blips.values()) RemoveBlip(blip);
+			this.blips.clear();
+		}
+	};
 
 // ../../../packages/lib/src/client/streaming.ts
-/** Loads an animation dictionary. Call `RemoveAnimDict(dict)` when it is no longer played. */
+/**
+	* Loads a model and resolves with its hash. Rejects when the model does not exist or does not load in time.
+	* Call `SetModelAsNoLongerNeeded(hash)` once the entity is created.
+	*/
+	async function requestModel(model, timeoutMs = 1e4) {
+		const hash = typeof model === "number" ? model : GetHashKey(model);
+		if (!IsModelInCdimage(hash)) throw new Error(`model ${model} does not exist`);
+		RequestModel(hash);
+		await waitFor(() => HasModelLoaded(hash) || void 0, timeoutMs);
+		return hash;
+	}
+	/** Loads an animation dictionary. Call `RemoveAnimDict(dict)` when it is no longer played. */
 	async function requestAnimDict(dict, timeoutMs = 1e4) {
 		if (!DoesAnimDictExist(dict)) throw new Error(`anim dict ${dict} does not exist`);
 		RequestAnimDict(dict);
@@ -540,6 +600,74 @@ try{
 	const log$1 = createLogger(GetCurrentResourceName());
 	/** One zone set for every local ped of this resource: peds exist only while their player is near. */
 	const zones = new Zones();
+	let nextId = 0;
+	/**
+	* A ped only this client sees (a shopkeeper, a job NPC): created when the player comes near, deleted when they leave,
+	* frozen, invincible and deaf to events. Never networked, so strict entity lockdown does not matter.
+	*/
+	var LocalPed = class {
+		options;
+		id = `ped:${++nextId}`;
+		handle = 0;
+		wanted = false;
+		constructor(options) {
+			this.options = options;
+			const { x, y, z } = options.coords;
+			zones.add(this.id, {
+				shape: {
+					type: "sphere",
+					center: {
+						x,
+						y,
+						z
+					},
+					radius: options.distance ?? 50
+				},
+				interval: 1e3,
+				onEnter: () => void this.spawn(),
+				onExit: () => this.despawn()
+			});
+		}
+		/** The ped while it exists, else 0. */
+		get entity() {
+			return this.handle;
+		}
+		/** Deletes the ped for good. */
+		remove() {
+			zones.remove(this.id);
+			this.despawn();
+		}
+		async spawn() {
+			this.wanted = true;
+			const o = this.options;
+			try {
+				const hash = await requestModel(o.model);
+				if (o.anim) await requestAnimDict(o.anim.dict);
+				if (!this.wanted || this.handle) return;
+				const { x, y, z, heading } = o.coords;
+				const ped = CreatePed(4, hash, x, y, o.ground === false ? z : z - 1, heading, false, false);
+				SetModelAsNoLongerNeeded(hash);
+				FreezeEntityPosition(ped, true);
+				SetEntityInvincible(ped, true);
+				SetBlockingOfNonTemporaryEvents(ped, true);
+				SetPedCanRagdoll(ped, false);
+				if (o.scenario) TaskStartScenarioInPlace(ped, o.scenario, 0, true);
+				else if (o.anim) TaskPlayAnim(ped, o.anim.dict, o.anim.clip, 8, 8, -1, 1, 0, false, false, false);
+				this.handle = ped;
+				o.onSpawn?.(ped);
+			} catch (error) {
+				log$1.error(`local ped ${o.model} could not be created`, error);
+			}
+		}
+		despawn() {
+			this.wanted = false;
+			if (!this.handle) return;
+			const ped = this.handle;
+			this.handle = 0;
+			this.options.onDespawn?.(ped);
+			DeleteEntity(ped);
+		}
+	};
 	on("onResourceStop", (resource) => {
 		if (resource === GetCurrentResourceName()) zones.clear();
 	});
@@ -547,8 +675,200 @@ try{
 // ../../../packages/lib/src/client/point.ts
 	const log = createLogger(GetCurrentResourceName());
 	const TARGET = "ox_target";
+	const target = (name, ...args) => callExport(TARGET, name, ...args);
+	/** Prompt mode, or target mode when the owner picked it and a resource answers the ox_target API (ai-target does). */
+	const style = () => GlobalState[CORE.interactionStateKey] === "target" && isResourceStarted(TARGET) ? "target" : "prompt";
 	const groups = /* @__PURE__ */ new Set();
 	const byPrompt = /* @__PURE__ */ new Map();
+	let busy = false;
+	let nextGroup = 0;
+	var Point = class {
+		promptId;
+		options;
+		inside = false;
+		ped = null;
+		targetZone = null;
+		/** The prompt text on screen, null while hidden. */
+		shown = null;
+		/** The label the target option was registered with. */
+		targetLabel = null;
+		constructor(promptId, options) {
+			this.promptId = promptId;
+			this.options = options;
+		}
+		text() {
+			const { label } = this.options;
+			if (typeof label === "string") return label;
+			try {
+				return label();
+			} catch (error) {
+				log.error("point label failed", error);
+				return "";
+			}
+		}
+		allowed() {
+			try {
+				return this.options.canShow?.() ?? true;
+			} catch (error) {
+				log.error("point canShow failed", error);
+				return false;
+			}
+		}
+		press() {
+			if (busy || !this.allowed()) return;
+			let result;
+			try {
+				result = this.options.onPressed();
+			} catch (error) {
+				return log.error("point onPressed failed", error);
+			}
+			if (!(result instanceof Promise)) return;
+			busy = true;
+			result.catch((error) => log.error("point onPressed failed", error)).finally(() => busy = false);
+		}
+		/** The prompt follows inside + canShow + the current label (prompt mode only). */
+		sync(group) {
+			const text = (this.options.promptOnly ? "prompt" : group) === "prompt" && this.inside && this.allowed() ? this.text() : null;
+			if (text === this.shown) return;
+			this.shown = text;
+			if (text !== null) showPrompt(this.promptId, text);
+			else hidePrompt(this.promptId);
+		}
+		targetOption() {
+			this.targetLabel = this.text();
+			return [{
+				name: this.promptId,
+				label: this.targetLabel,
+				icon: this.options.icon,
+				distance: this.options.radius ?? 2,
+				canInteract: () => this.allowed(),
+				onSelect: () => this.press()
+			}];
+		}
+	};
+	/**
+	* Interaction points of a script (counters, shop doors, NPCs): one object per point instead of zones + prompts +
+	* blips + peds by hand. Each point shows as ai-core's prompt (interaction key) or as a target option, as the owner
+	* picks in ai-core's panel (Interaction); the same `onPressed` runs either way. Rebuild with `clear()` + `add()` when
+	* the panel changes the points; call `refresh()` when what `canShow` reads changes (job, duty, vehicle).
+	*/
+	var Points = class {
+		zones = new Zones();
+		blips = new Blips();
+		points = /* @__PURE__ */ new Map();
+		prefix = `pt${++nextGroup}:`;
+		constructor() {
+			groups.add(this);
+		}
+		/** Adds (or replaces) a point. */
+		add(id, options) {
+			this.remove(id);
+			const point = new Point(this.prefix + id, options);
+			this.points.set(id, point);
+			byPrompt.set(point.promptId, point);
+			if (options.ped) {
+				const ped = options.ped;
+				point.ped = new LocalPed({
+					...ped,
+					coords: ped.coords ?? {
+						...options.coords,
+						heading: 0
+					},
+					onSpawn: (entity) => style() === "target" && !options.promptOnly && target("addLocalEntity", entity, point.targetOption()),
+					onDespawn: (entity) => style() === "target" && !options.promptOnly && target("removeLocalEntity", entity, point.promptId)
+				});
+			}
+			if (options.blip) this.blips.add(id, {
+				...options.blip,
+				coords: options.blip.coords ?? options.coords
+			});
+			this.zones.add(id, {
+				shape: options.height !== void 0 ? {
+					type: "cylinder",
+					center: options.coords,
+					radius: options.radius ?? 2,
+					height: options.height
+				} : {
+					type: "sphere",
+					center: options.coords,
+					radius: options.radius ?? 2
+				},
+				interval: options.interval,
+				onEnter: () => {
+					point.inside = true;
+					point.sync(style());
+					options.onEnter?.();
+				},
+				onExit: () => {
+					point.inside = false;
+					point.sync(style());
+					options.onExit?.();
+				}
+			});
+			this.attach(point, style());
+		}
+		remove(id) {
+			const point = this.points.get(id);
+			if (!point) return;
+			this.zones.remove(id);
+			this.detach(point);
+			point.sync("target");
+			point.ped?.remove();
+			this.blips.remove(id);
+			byPrompt.delete(point.promptId);
+			this.points.delete(id);
+		}
+		clear() {
+			for (const id of [...this.points.keys()]) this.remove(id);
+		}
+		/**
+		* Checks `canShow` and a function `label` again (prompt mode; targets ask `canShow` when opened and get a changed
+		* label re-registered). Inside a state bag change handler the new value is not readable yet: call it in a `setTimeout`.
+		*/
+		refresh(id) {
+			const mode = style();
+			const one = id !== void 0 ? this.points.get(id) : void 0;
+			for (const point of one ? [one] : id === void 0 ? this.points.values() : []) {
+				point.sync(mode);
+				if (mode === "target" && !point.options.promptOnly && typeof point.options.label === "function" && point.targetLabel !== point.text()) {
+					this.detach(point);
+					this.attach(point, mode);
+				}
+			}
+		}
+		isInside(id) {
+			return this.points.get(id)?.inside ?? false;
+		}
+		/** Puts every point on the current interaction style (style switch, target resource restart). */
+		restyle() {
+			const mode = style();
+			for (const point of this.points.values()) {
+				this.detach(point);
+				this.attach(point, mode);
+				point.sync(mode);
+			}
+		}
+		attach(point, mode) {
+			if (mode !== "target" || point.options.promptOnly) return;
+			const ped = point.ped?.entity;
+			if (point.ped) {
+				if (ped) target("addLocalEntity", ped, point.targetOption());
+				return;
+			}
+			point.targetZone = target("addSphereZone", {
+				coords: point.options.coords,
+				radius: point.options.targetRadius ?? 1,
+				options: point.targetOption()
+			});
+		}
+		detach(point) {
+			if (!isResourceStarted(TARGET)) return void (point.targetZone = null);
+			if (point.targetZone != null) target("removeZone", point.targetZone);
+			point.targetZone = null;
+			const ped = point.ped?.entity;
+			if (ped) target("removeLocalEntity", ped, point.promptId);
+		}
+	};
 	onPromptPressed((id) => byPrompt.get(id)?.press());
 	const restyleAll = () => {
 		for (const group of groups) group.restyle();
@@ -750,73 +1070,69 @@ try{
 // resource/client/index.ts
 	const world = new AdminWorld(["routes", "stops"]);
 	const texts = loadLocaleTexts();
-	const BLIP_TEXT = "AIJOBS_BLIP";
-	AddTextEntry(BLIP_TEXT, "~a~");
 	const errorText = (v, fallback) => {
 		const key = typeof record(v).error === "string" ? String(record(v).error) : fallback;
 		return texts[key] ?? key;
 	};
 	/**
-	* The player's shift: a route blip to the current stop, a zone around it with ai-core's prompt, the stop's progress
-	* bar; depots show "start / stop working". The server picks every stop.
+	* The player's shift: a route blip to the current stop, a point there that runs the stop's progress bar; depots
+	* offer "start / stop working". The server picks every stop.
 	*/
 	var Work = class {
 		shift = null;
-		depotZones = new Zones();
-		stopZone = new Zones();
+		depots = new Points();
+		stopPoint = new Points();
 		stopBlip = 0;
-		depotBlips = [];
 		rebuildDepots() {
-			this.depotZones.clear();
-			for (const blip of this.depotBlips) RemoveBlip(blip);
-			this.depotBlips = [];
+			this.depots.clear();
 			for (const route of readRoutes(world.get("routes")).values()) {
-				const id = `depot:${route.id}`;
-				this.depotZones.add(id, {
-					shape: {
-						type: "sphere",
-						center: route.depot,
-						radius: 2
+				this.depots.add(`start:${route.id}`, {
+					coords: route.depot,
+					label: Locale("JOBS_PROMPT_START", route.label),
+					icon: "briefcase",
+					blip: {
+						sprite: route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67,
+						color: 5,
+						scale: .65,
+						label: route.label
 					},
-					interval: 500,
-					onEnter: () => showPrompt(id, Locale(this.shift?.route === route.id ? "JOBS_PROMPT_STOP" : "JOBS_PROMPT_START", route.label)),
-					onExit: () => hidePrompt(id)
+					canShow: () => this.shift?.route !== route.id,
+					onPressed: () => this.toggle(route.id)
 				});
-				const blip = AddBlipForCoord(route.depot.x, route.depot.y, route.depot.z);
-				SetBlipSprite(blip, route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67);
-				SetBlipColour(blip, 5);
-				SetBlipScale(blip, .65);
-				SetBlipAsShortRange(blip, true);
-				BeginTextCommandSetBlipName(BLIP_TEXT);
-				AddTextComponentSubstringPlayerName(route.label);
-				EndTextCommandSetBlipName(blip);
-				this.depotBlips.push(blip);
+				this.depots.add(`stop:${route.id}`, {
+					coords: route.depot,
+					label: Locale("JOBS_PROMPT_STOP", route.label),
+					icon: "circle-stop",
+					canShow: () => this.shift?.route === route.id,
+					onPressed: () => this.toggle(route.id)
+				});
 			}
 		}
 		set(shift) {
 			this.shift = shift;
-			this.stopZone.clear();
+			this.depots.refresh();
+			this.stopPoint.clear();
 			if (this.stopBlip) RemoveBlip(this.stopBlip);
 			this.stopBlip = 0;
-			hidePrompt("stop");
 			if (!shift) return;
 			const s = shift.stop;
-			this.stopBlip = AddBlipForCoord(s.x, s.y, s.z);
-			SetBlipColour(this.stopBlip, 5);
+			this.stopBlip = createBlip({
+				coords: s,
+				label: s.label,
+				sprite: 1,
+				color: 5,
+				scale: 1,
+				shortRange: false
+			});
 			SetBlipRoute(this.stopBlip, true);
 			SetBlipRouteColour(this.stopBlip, 5);
-			BeginTextCommandSetBlipName(BLIP_TEXT);
-			AddTextComponentSubstringPlayerName(s.label);
-			EndTextCommandSetBlipName(this.stopBlip);
-			this.stopZone.add("stop", {
-				shape: {
-					type: "sphere",
-					center: s,
-					radius: 6
-				},
+			this.stopPoint.add("stop", {
+				coords: s,
+				label: Locale("JOBS_PROMPT_DO", s.label),
+				icon: "hand",
+				radius: 6,
 				interval: 300,
-				onEnter: () => showPrompt("stop", Locale("JOBS_PROMPT_DO", s.label)),
-				onExit: () => hidePrompt("stop")
+				onPressed: () => this.doStop()
 			});
 		}
 		async doStop() {
@@ -855,10 +1171,6 @@ try{
 		AttachEntityToEntity(NetToVeh(car), bed, GetEntityBoneIndexByName(bed, "bodyshell"), 0, -1.6, 1, 0, 0, 0, false, false, false, false, 20, true);
 	});
 	onServerEvent(EVENTS.shift, { args: ([raw]) => [raw == null ? null : toShift(raw)] }, (shift) => work.set(shift));
-	onPromptPressed((id) => {
-		if (id === "stop") work.doStop();
-		else if (id.startsWith("depot:")) work.toggle(id.slice(6));
-	});
 
 })();
 }catch(e){globalThis.__aicoreReportError&&globalThis.__aicoreReportError("load: "+(e&&e.stack||e));throw e}

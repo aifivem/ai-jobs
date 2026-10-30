@@ -1,73 +1,58 @@
-import { AdminWorld, cache, hidePrompt, loadLocaleTexts, notify, onPromptPressed, onServerEvent, progress, showPrompt, triggerServerCallback, Zones } from "@aicore-fivem/lib/client";
+import { AdminWorld, cache, createBlip, loadLocaleTexts, notify, onServerEvent, Points, progress, triggerServerCallback } from "@aicore-fivem/lib/client";
 import { record } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
 import { EVENTS, readRoutes, toShift, type Shift } from "common/routes";
 
 const world = new AdminWorld(["routes", "stops"]);
 const texts = loadLocaleTexts();
-const BLIP_TEXT = "AIJOBS_BLIP";
-AddTextEntry(BLIP_TEXT, "~a~");
 const errorText = (v: unknown, fallback: string): string => {
   const key = typeof record(v).error === "string" ? String(record(v).error) : fallback;
   return texts[key] ?? key;
 };
 
 /**
- * The player's shift: a route blip to the current stop, a zone around it with ai-core's prompt, the stop's progress
- * bar; depots show "start / stop working". The server picks every stop.
+ * The player's shift: a route blip to the current stop, a point there that runs the stop's progress bar; depots
+ * offer "start / stop working". The server picks every stop.
  */
 class Work {
   shift: Shift | null = null;
-  private readonly depotZones = new Zones();
-  private readonly stopZone = new Zones();
+  private readonly depots = new Points();
+  private readonly stopPoint = new Points();
   private stopBlip = 0;
-  private depotBlips: number[] = [];
 
   rebuildDepots(): void {
-    this.depotZones.clear();
-    for (const blip of this.depotBlips) RemoveBlip(blip);
-    this.depotBlips = [];
+    this.depots.clear();
     for (const route of readRoutes(world.get("routes")).values()) {
-      const id = `depot:${route.id}`;
-      this.depotZones.add(id, {
-        shape: { type: "sphere", center: route.depot, radius: 2 },
-        interval: 500,
-        onEnter: () => showPrompt(id, Locale(this.shift?.route === route.id ? "JOBS_PROMPT_STOP" : "JOBS_PROMPT_START", route.label)),
-        onExit: () => hidePrompt(id),
+      this.depots.add(`start:${route.id}`, {
+        coords: route.depot,
+        label: Locale("JOBS_PROMPT_START", route.label),
+        icon: "briefcase",
+        blip: { sprite: route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67, color: 5, scale: 0.65, label: route.label },
+        canShow: () => this.shift?.route !== route.id,
+        onPressed: () => this.toggle(route.id),
       });
-      const blip = AddBlipForCoord(route.depot.x, route.depot.y, route.depot.z);
-      SetBlipSprite(blip, route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67);
-      SetBlipColour(blip, 5);
-      SetBlipScale(blip, 0.65);
-      SetBlipAsShortRange(blip, true);
-      BeginTextCommandSetBlipName(BLIP_TEXT);
-      AddTextComponentSubstringPlayerName(route.label);
-      EndTextCommandSetBlipName(blip);
-      this.depotBlips.push(blip);
+      this.depots.add(`stop:${route.id}`, {
+        coords: route.depot,
+        label: Locale("JOBS_PROMPT_STOP", route.label),
+        icon: "circle-stop",
+        canShow: () => this.shift?.route === route.id,
+        onPressed: () => this.toggle(route.id),
+      });
     }
   }
 
   set(shift: Shift | null): void {
     this.shift = shift;
-    this.stopZone.clear();
+    this.depots.refresh();
+    this.stopPoint.clear();
     if (this.stopBlip) RemoveBlip(this.stopBlip);
     this.stopBlip = 0;
-    hidePrompt("stop");
     if (!shift) return;
     const s = shift.stop;
-    this.stopBlip = AddBlipForCoord(s.x, s.y, s.z);
-    SetBlipColour(this.stopBlip, 5);
+    this.stopBlip = createBlip({ coords: s, label: s.label, sprite: 1, color: 5, scale: 1, shortRange: false });
     SetBlipRoute(this.stopBlip, true);
     SetBlipRouteColour(this.stopBlip, 5);
-    BeginTextCommandSetBlipName(BLIP_TEXT);
-    AddTextComponentSubstringPlayerName(s.label);
-    EndTextCommandSetBlipName(this.stopBlip);
-    this.stopZone.add("stop", {
-      shape: { type: "sphere", center: s, radius: 6 },
-      interval: 300,
-      onEnter: () => showPrompt("stop", Locale("JOBS_PROMPT_DO", s.label)),
-      onExit: () => hidePrompt("stop"),
-    });
+    this.stopPoint.add("stop", { coords: s, label: Locale("JOBS_PROMPT_DO", s.label), icon: "hand", radius: 6, interval: 300, onPressed: () => this.doStop() });
   }
 
   async doStop(): Promise<void> {
@@ -110,7 +95,3 @@ onServerEvent(
   },
 );
 onServerEvent(EVENTS.shift, { args: ([raw]) => [raw == null ? null : toShift(raw)] as const }, (shift) => work.set(shift));
-onPromptPressed((id) => {
-  if (id === "stop") void work.doStop();
-  else if (id.startsWith("depot:")) void work.toggle(id.slice(6));
-});
