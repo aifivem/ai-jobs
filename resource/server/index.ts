@@ -91,7 +91,7 @@ onClientCallback(EVENTS.start, { args: ([id]) => (typeof id === "string" ? [id] 
     const ok = await waitFor(() => DoesEntityExist(vehicle ?? 0) || undefined, 5000).catch(() => false);
     if (!ok) return fail("JOBS_ERR_VEHICLE");
     SetVehicleNumberPlateText(vehicle, `WORK${source}`.slice(0, 8));
-    vehicleKeys.give(source, vehicle);
+    vehicleKeys.give(source, vehicle, "job");
   }
   const towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
   shifts.set(source, { route, stop: first.stop, done: 0, vehicle, index: first.index, since: Date.now(), towed, loaded: false });

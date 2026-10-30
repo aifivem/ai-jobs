@@ -84,7 +84,7 @@ try{
 	}
 
 // ../../../packages/lib/src/client/netEvent.ts
-	const log$2 = createLogger(GetCurrentResourceName());
+	const log$4 = createLogger(GetCurrentResourceName());
 	/**
 	* Whether the net event being handled came from the server (read it before the first `await`). On a client only
 	* events from the server carry a source (65535 in the docs); a local emit by any resource carries none.
@@ -95,14 +95,14 @@ try{
 		onNet(name, (...raw) => {
 			if (!fromServer() || !handler) return;
 			const args = parse ? parse(raw) : [];
-			if (!args) return log$2.warn(`event ${name} from the server had invalid arguments`);
-			Promise.resolve().then(() => handler(...args)).catch((error) => log$2.error(`event ${name} failed`, error));
+			if (!args) return log$4.warn(`event ${name} from the server had invalid arguments`);
+			Promise.resolve().then(() => handler(...args)).catch((error) => log$4.error(`event ${name} failed`, error));
 		});
 	}
 
 // ../../../packages/lib/src/client/callback.ts
 	const resource$1 = GetCurrentResourceName();
-	const log$1 = createLogger(resource$1);
+	const log$3 = createLogger(resource$1);
 	const pending = /* @__PURE__ */ new Map();
 	let nextId = 0;
 	onNet(responseEvent(resource$1), (id, ok, result) => {
@@ -172,6 +172,10 @@ try{
 		clientPromptPressedEvent: "ai-core:client:promptPressed",
 		/** (key: keyof PlayerCache, value) a cached value of the local player changed (one watcher in ai-core for every resource). */
 		clientCacheEvent: "ai-core:client:cache",
+		/** Server -> client callback: (model: string) the `CreateVehicleServerSetter` type of a model, null when the game has no such vehicle (ai-core's client answers for every resource, lib `spawnVehicle`). */
+		vehicleTypeCallback: "ai-core:vehicleType",
+		/** GlobalState: "prompt" | "target", how lib `Points` let players interact (ai-core panel setting). */
+		interactionStateKey: "ai:interaction",
 		charactersCallback: "ai-core:characters",
 		createCharacterCallback: "ai-core:createCharacter",
 		deleteCharacterCallback: "ai-core:deleteCharacter",
@@ -271,6 +275,11 @@ try{
 // ../../../packages/lib/src/client/cache.ts
 /** The unarmed "weapon" hash: cached as `false`. */
 	const UNARMED = GetHashKey("WEAPON_UNARMED") | 0;
+	/** The weapon in a ped's hand, `false` when unarmed. */
+	function readWeapon(ped) {
+		const weapon = GetSelectedPedWeapon(ped) | 0;
+		return weapon === UNARMED ? false : weapon;
+	}
 	/** The vehicle, seat and weapon of a ped right now (also ai-core's watcher). */
 	function readPlayerState(ped) {
 		const vehicle = GetVehiclePedIsIn(ped, false);
@@ -280,11 +289,10 @@ try{
 			seat = i;
 			break;
 		}
-		const weapon = GetSelectedPedWeapon(ped) | 0;
 		return {
 			vehicle: vehicle || false,
 			seat,
-			weapon: weapon === UNARMED ? false : weapon
+			weapon: readWeapon(ped)
 		};
 	}
 	/**
@@ -316,7 +324,7 @@ try{
 	* (measured with 1,000,000 zones): zones sit in a grid of 64 m cells and a check looks only at the player's cell and
 	* the zones the player is in.
 	*/
-	const log = createLogger(GetCurrentResourceName());
+	const log$2 = createLogger(GetCurrentResourceName());
 	const CELL = 64;
 	/** A zone wider than this many cells is kept in one list checked every time instead of in the grid. */
 	const MAX_CELLS = 64;
@@ -483,7 +491,7 @@ try{
 				if (inside) zone.options.onEnter?.();
 				else zone.options.onExit?.();
 			} catch (error) {
-				log.error("zone handler failed", error);
+				log$2.error("zone handler failed", error);
 			}
 		}
 	};
@@ -495,16 +503,17 @@ try{
 	}
 
 // ../../../packages/lib/src/client/prompt.ts
-/**
+	const core$3 = resourceExport(CORE.resource);
+	/**
 	* ai-core's prompt (the "press E" box on the right): this resource shows and hides its own prompts by id; the
 	* interaction key is one rebindable keybind in ai-core, so nothing polls keys per frame. Show a prompt on a zone's
 	* enter, hide it on exit, act in `onPromptPressed`.
 	*/
 	function showPrompt(id, text) {
-		resourceExport(CORE.resource).ShowPrompt(id, text);
+		core$3.ShowPrompt(id, text);
 	}
 	function hidePrompt(id) {
-		resourceExport(CORE.resource).HidePrompt(id);
+		core$3.HidePrompt(id);
 	}
 	/** The player pressed the interaction key while this resource's prompt `id` was the one on top. */
 	function onPromptPressed(handler) {
@@ -513,6 +522,10 @@ try{
 			if (owner === resource && typeof id === "string") handler(id);
 		});
 	}
+
+// ../../../packages/lib/src/client/blip.ts
+	const LABEL = `AI_BLIP_${GetCurrentResourceName()}`;
+	AddTextEntry(LABEL, "~a~");
 
 // ../../../packages/lib/src/client/streaming.ts
 /** Loads an animation dictionary. Call `RemoveAnimDict(dict)` when it is no longer played. */
@@ -523,10 +536,33 @@ try{
 		return dict;
 	}
 
+// ../../../packages/lib/src/client/localPed.ts
+	const log$1 = createLogger(GetCurrentResourceName());
+	/** One zone set for every local ped of this resource: peds exist only while their player is near. */
+	const zones = new Zones();
+	on("onResourceStop", (resource) => {
+		if (resource === GetCurrentResourceName()) zones.clear();
+	});
+
+// ../../../packages/lib/src/client/point.ts
+	const log = createLogger(GetCurrentResourceName());
+	const TARGET = "ox_target";
+	const groups = /* @__PURE__ */ new Set();
+	const byPrompt = /* @__PURE__ */ new Map();
+	onPromptPressed((id) => byPrompt.get(id)?.press());
+	const restyleAll = () => {
+		for (const group of groups) group.restyle();
+	};
+	AddStateBagChangeHandler(CORE.interactionStateKey, "global", () => setTimeout(restyleAll, 0));
+	for (const event of ["onClientResourceStart", "onClientResourceStop"]) on(event, (resource) => {
+		if (resource === TARGET || resource === "ai-target") setTimeout(restyleAll, 0);
+	});
+
 // ../../../packages/lib/src/client/notify.ts
-/** Shows a notification card on this player's screen (ai-core draws it); `text` is already translated. */
+	const core$2 = resourceExport(CORE.resource);
+	/** Shows a notification card on this player's screen (ai-core draws it); `text` is already translated. */
 	function notify(text, kind = "info", duration) {
-		resourceExport(CORE.resource).Notify({
+		core$2.Notify({
 			text,
 			kind,
 			duration
@@ -537,13 +573,12 @@ try{
 	* when cancelled (death, getting into a vehicle). Checks ten times a second, nothing per frame.
 	*/
 	async function progress(options) {
-		const core = resourceExport(CORE.resource);
 		const ped = cache.ped;
 		if (options.anim) {
 			await requestAnimDict(options.anim.dict);
 			TaskPlayAnim(ped, options.anim.dict, options.anim.clip, 3, 3, options.duration, options.anim.flag ?? 49, 0, false, false, false);
 		}
-		core.ShowProgress(options.label, options.duration);
+		core$2.ShowProgress(options.label, options.duration);
 		const end = GetGameTimer() + options.duration;
 		const done = await new Promise((resolve) => {
 			const timer = setInterval(() => {
@@ -554,12 +589,13 @@ try{
 			}, 100);
 		});
 		if (options.anim) StopAnimTask(ped, options.anim.dict, options.anim.clip, 1);
-		core.HideProgress();
+		core$2.HideProgress();
 		return done;
 	}
 
 // ../../../packages/lib/src/client/menu.ts
-/** Menus and input dialogs this resource asked ai-core for, waiting for the player's answer. */
+	const core$1 = resourceExport(CORE.resource);
+	/** Menus and input dialogs this resource asked ai-core for, waiting for the player's answer. */
 	var Requests = class {
 		resource = GetCurrentResourceName();
 		waiting = /* @__PURE__ */ new Map();
@@ -586,6 +622,9 @@ try{
 		}
 	};
 	const requests = new Requests();
+
+// ../../../packages/lib/src/client/inventory.ts
+	const core = resourceExport(CORE.resource);
 
 // ../../../packages/lib/src/client/vehicleProps.ts
 	const MOD_TYPES = Array.from({ length: 50 }, (_, i) => i);
