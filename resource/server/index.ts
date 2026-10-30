@@ -243,7 +243,12 @@ onClientCallback(
       if (!inventory.addItem(source, work.route.item, count))
         return fail("JOBS_ERR_SPACE");
     } else if (work.route.pay > 0) {
-      core.AddMoney(source, "bank", work.route.pay, `work:${work.route.id}`);
+      core.AddMoney(
+        source,
+        work.route.account,
+        work.route.pay,
+        `work:${work.route.id}`,
+      );
       notify(source, Locale("JOBS_PAID", work.route.pay), "success", 2500);
     }
     work.done++;

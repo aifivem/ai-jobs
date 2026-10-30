@@ -317,6 +317,8 @@ const CORE = {
 	dutyChangedEvent: "ai-core:dutyChanged",
 	gangsChangedEvent: "ai-core:gangsChanged",
 	activeGangChangedEvent: "ai-core:activeGangChanged",
+	metaChangedEvent: "ai-core:metaChanged",
+	definitionsChangedEvent: "ai-core:definitionsChanged",
 	characterScreenEvent: "ai-core:characterScreen",
 	inventoryChangedEvent: "ai-core:inventoryChanged",
 	itemUsedEvent: "ai-core:itemUsed",
@@ -328,6 +330,9 @@ const CORE = {
 	clientPromptPressedEvent: "ai-core:client:promptPressed",
 	clientCacheEvent: "ai-core:client:cache",
 	clientHudVisibleEvent: "ai-core:client:hudVisible",
+	clientWorldSyncEvent: "ai-core:client:worldSync",
+	clientCancelProgressEvent: "ai-core:client:cancelProgress",
+	clientDefinitionsEvent: "ai-core:client:definitions",
 	vehicleTypeCallback: "ai-core:vehicleType",
 	interactionStateKey: "ai:interaction",
 	charactersCallback: "ai-core:characters",
@@ -824,7 +829,10 @@ var AdminPanel = class {
 	constructor(schema) {
 		this.schema = schema;
 		for (let [name, spec] of Object.entries(schema.files)) this.load(name, spec);
-		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$14.RegisterAdminPanel(this.resource));
+		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
+			count: 4,
+			windowMs: 1e4
+		} }), setImmediate(() => core$14.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -1084,12 +1092,14 @@ const EMPTY = new Set(), online = new OnlinePlayers(), core$11 = resourceExport(
 	"submarine",
 	"trailer",
 	"train"
-]), types = new Map();
+]), types = new Map(), votes = new Map();
 async function vehicleType(model, asker) {
 	let known = types.get(model);
 	if (known !== void 0) return known;
 	let answer = await triggerClientCallback(CORE.vehicleTypeCallback, asker, [model]).catch(() => null);
-	return typeof answer != "string" || !TYPES.has(answer) ? null : (types.set(model, answer), answer);
+	if (typeof answer != "string" || !TYPES.has(answer)) return null;
+	let seen = votes.get(model) ?? new Map(), first = seen.get(answer);
+	return first !== void 0 && first !== asker ? (types.set(model, answer), votes.delete(model)) : (seen.set(answer, asker), votes.set(model, seen)), answer;
 }
 async function seatPlayer(vehicle, source, seat) {
 	let ped = GetPlayerPed(String(source));
@@ -1191,8 +1201,9 @@ var Group = class {
 	get front() {
 		return this.dues[this.head] ?? 0;
 	}
+	compactAt = 64;
 	push(job, due) {
-		this.count > this.mask && this.grow();
+		this.count >= this.compactAt && this.compact(), this.count > this.mask && this.grow();
 		let i = this.head + this.count & this.mask;
 		this.jobs[i] = job, this.gens[i] = job.gen, this.dues[i] = due, this.count++;
 	}
@@ -1205,6 +1216,17 @@ var Group = class {
 			let next = due + this.interval;
 			next <= now && (next = now + this.interval), this.push(job, next), job.call();
 		}
+	}
+	compact() {
+		let kept = 0;
+		for (let n = 0; n < this.count; n++) {
+			let i = this.head + n & this.mask, job = this.jobs[i];
+			if (!job || job.gen !== this.gens[i]) continue;
+			let k = this.head + kept & this.mask;
+			this.jobs[k] = job, this.gens[k] = this.gens[i] ?? 0, this.dues[k] = this.dues[i] ?? 0, kept++;
+		}
+		for (let n = kept; n < this.count; n++) this.jobs[this.head + n & this.mask] = void 0;
+		this.count = kept, this.compactAt = Math.max(64, kept * 2);
 	}
 	grow() {
 		let size = (this.mask + 1) * 2, jobs = Array(size), gens = Array(size).fill(0), dues = Array(size).fill(0);
@@ -1308,6 +1330,7 @@ function readRoutes(raw) {
 				heading: 0
 			}),
 			pay: int(v.pay, 0, 0, 1e5),
+			account: str(v.account, "bank", 32) || "bank",
 			seconds: int(v.seconds, 5, 0, 120),
 			item: str(v.item, "", 48),
 			stops: int(v.stops, 0, 0, 100),
@@ -1362,6 +1385,7 @@ const jobsSchema = {
 					heading: 0
 				},
 				pay: 100,
+				account: "bank",
 				seconds: 5,
 				item: "",
 				stops: 5,
@@ -1408,6 +1432,13 @@ const jobsSchema = {
 					min: 0,
 					max: 1e5,
 					integer: !0
+				},
+				account: {
+					type: "text",
+					lookup: "account",
+					min: 2,
+					max: 32,
+					optional: !0
 				},
 				seconds: {
 					type: "number",
@@ -1617,6 +1648,13 @@ const jobsSchema = {
 						unit: "$"
 					},
 					{
+						widget: "text",
+						lookup: "account",
+						path: "account",
+						label: "ADMIN_F_ACCOUNT",
+						hint: "ADMIN_H_ACCOUNT"
+					},
+					{
 						widget: "tags",
 						path: "towModels",
 						label: "ADMIN_F_TOW_MODELS",
@@ -1816,7 +1854,7 @@ onClientCallback(EVENTS.start, {
 	if (work.route.kind === "gather" && work.route.item) {
 		let { gatherMin, gatherMax } = work.route, count = gatherMin + Math.floor(Math.random() * (gatherMax - gatherMin + 1));
 		if (!inventory.addItem(source, work.route.item, count)) return fail("JOBS_ERR_SPACE");
-	} else work.route.pay > 0 && (core.AddMoney(source, "bank", work.route.pay, `work:${work.route.id}`), notify(source, Locale("JOBS_PAID", work.route.pay), "success", 2500));
+	} else work.route.pay > 0 && (core.AddMoney(source, work.route.account, work.route.pay, `work:${work.route.id}`), notify(source, Locale("JOBS_PAID", work.route.pay), "success", 2500));
 	if (work.done++, aiLog("work", `stop ${stopId}`, {
 		source,
 		metadata: { route: work.route.id }

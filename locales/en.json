@@ -47,7 +47,7 @@
   "ADMIN_P_VEHICLE": "taxi",
   "ADMIN_F_SPAWN": "Vehicle spawn",
   "ADMIN_F_PAY": "Pay per stop",
-  "ADMIN_H_PAY": "Paid to the bank after each stop.",
+  "ADMIN_H_PAY": "Paid into the pay account after each stop.",
   "ADMIN_C_GATHER": "Gathering",
   "ADMIN_C_GATHER_DESC": "Gathering routes give items instead of money.",
   "ADMIN_F_ITEM": "Item per stop",
@@ -74,5 +74,7 @@
   "ADMIN_H_COORDS": "Where the worker stops.",
   "ADMIN_O_TOW": "Towing broken-down cars",
   "ADMIN_DELETE_ROUTE_DESC": "Its stops stay and can be reused.",
-  "JOBS_ERR_TOW_LOST": "The towed car is not on the flatbed"
+  "JOBS_ERR_TOW_LOST": "The towed car is not on the flatbed",
+  "ADMIN_F_ACCOUNT": "Pay account",
+  "ADMIN_H_ACCOUNT": "The money account the pay goes to (bank by default)."
 }

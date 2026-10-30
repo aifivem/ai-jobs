@@ -133,10 +133,16 @@
           }
         },
         "pay": {
-          "description": "Pay per stop: Paid to the bank after each stop.",
+          "description": "Pay per stop: Paid into the pay account after each stop.",
           "type": "integer",
           "minimum": 0,
           "maximum": 100000
+        },
+        "account": {
+          "description": "Pay account: The money account the pay goes to (bank by default).",
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32
         },
         "seconds": {
           "description": "Time per stop: How long the work at a stop takes.",

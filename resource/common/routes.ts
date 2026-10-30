@@ -45,6 +45,8 @@ export interface Route {
   spawn: Vec4;
   /** Dollars per stop (vehicle routes). */
   pay: number;
+  /** The money account the pay goes to. */
+  account: string;
   /** Seconds the stop takes. */
   seconds: number;
   /** Item per stop (gather routes). */
@@ -126,6 +128,7 @@ export function readRoutes(raw: unknown): Map<string, Route> {
         heading: 0,
       }),
       pay: int(v.pay, 0, 0, 100_000),
+      account: str(v.account, "bank", 32) || "bank",
       seconds: int(v.seconds, 5, 0, 120),
       item: str(v.item, "", 48),
       stops: int(v.stops, 0, 0, 100),
