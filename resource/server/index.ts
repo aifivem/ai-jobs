@@ -1,4 +1,4 @@
-import { AdminPanel, aiLog, aiLogChannels, inventory, notify, onClientCallback, optionalExport, resourceExport } from "@aicore-fivem/lib/server";
+import { AdminPanel, aiLog, aiLogChannels, inventory, notify, onClientCallback, resourceExport, vehicleKeys } from "@aicore-fivem/lib/server";
 import { waitFor } from "@aicore-fivem/lib/shared";
 import { Locale, ResourceName } from "common";
 import { EVENTS, readRoutes, readStops, type Route, type Shift, type Stop } from "common/routes";
@@ -91,7 +91,7 @@ onClientCallback(EVENTS.start, { args: ([id]) => (typeof id === "string" ? [id] 
     const ok = await waitFor(() => DoesEntityExist(vehicle ?? 0) || undefined, 5000).catch(() => false);
     if (!ok) return fail("JOBS_ERR_VEHICLE");
     SetVehicleNumberPlateText(vehicle, `WORK${source}`.slice(0, 8));
-    optionalExport("ai-vehiclekeys")?.GiveKeys(source, vehicle);
+    vehicleKeys.give(source, vehicle);
   }
   const towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
   shifts.set(source, { route, stop: first.stop, done: 0, vehicle, index: first.index, since: Date.now(), towed, loaded: false });
