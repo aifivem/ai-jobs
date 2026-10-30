@@ -632,12 +632,15 @@ try{
 		/** Callback: (stopId) -> { ok } the player finished the current stop (after the progress). */
 		arrive: "ai-jobs:arrive",
 		/** Server -> worker: (shift: Shift | null) the current stop (or the shift ended). */
-		shift: "ai-jobs:client:shift"
+		shift: "ai-jobs:client:shift",
+		/** Server -> the towed car's owner: (carNetId, flatbedNetId) attach the car to the flatbed. */
+		attach: "ai-jobs:client:attach"
 	};
 	const KINDS = [
 		"ordered",
 		"random",
-		"gather"
+		"gather",
+		"tow"
 	];
 	function readRoutes(raw) {
 		const out = /* @__PURE__ */ new Map();
@@ -725,7 +728,7 @@ try{
 					onExit: () => hidePrompt(id)
 				});
 				const blip = AddBlipForCoord(route.depot.x, route.depot.y, route.depot.z);
-				SetBlipSprite(blip, route.kind === "gather" ? 478 : 67);
+				SetBlipSprite(blip, route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67);
 				SetBlipColour(blip, 5);
 				SetBlipScale(blip, .65);
 				SetBlipAsShortRange(blip, true);
@@ -790,6 +793,12 @@ try{
 	const work = new Work();
 	work.rebuildDepots();
 	world.onChange("routes", () => work.rebuildDepots());
+	/** The towed car's owner attaches it to the flatbed (attachments replicate from the owner). */
+	onServerEvent(EVENTS.attach, { args: ([car, flatbed]) => typeof car === "number" && typeof flatbed === "number" ? [car, flatbed] : null }, (car, flatbed) => {
+		if (!NetworkDoesEntityExistWithNetworkId(car) || !NetworkDoesEntityExistWithNetworkId(flatbed)) return;
+		const bed = NetToVeh(flatbed);
+		AttachEntityToEntity(NetToVeh(car), bed, GetEntityBoneIndexByName(bed, "bodyshell"), 0, -1.6, 1, 0, 0, 0, false, false, false, false, 20, true);
+	});
 	onServerEvent(EVENTS.shift, { args: ([raw]) => [raw == null ? null : toShift(raw)] }, (shift) => work.set(shift));
 	onPromptPressed((id) => {
 		if (id === "stop") work.doStop();

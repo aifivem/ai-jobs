@@ -12,7 +12,7 @@ export const jobsSchema: PanelSchema = {
       newRecord: { label: "", kind: "random", job: "", depot: { x: 0, y: 0, z: 0 }, vehicle: "", spawn: { x: 0, y: 0, z: 0, heading: 0 }, pay: 100, seconds: 5, item: "", stops: 5 },
       sections: {
         label: { type: "text", min: 1, max: 48 },
-        kind: { type: "enum", values: ["ordered", "random", "gather"] },
+        kind: { type: "enum", values: ["ordered", "random", "gather", "tow"] },
         job: { type: "text", min: 0, max: 32 },
         depot: { type: "vec3" },
         vehicle: { type: "text", min: 0, max: 32 },
@@ -58,6 +58,7 @@ export const jobsSchema: PanelSchema = {
                 { value: "random", label: "ADMIN_O_RANDOM" },
                 { value: "ordered", label: "ADMIN_O_ORDERED" },
                 { value: "gather", label: "ADMIN_O_GATHER" },
+                { value: "tow", label: "ADMIN_O_TOW" },
               ],
             },
             { widget: "text", path: "job", label: "ADMIN_F_JOB", hint: "ADMIN_H_JOB", placeholder: "ADMIN_P_JOB" },

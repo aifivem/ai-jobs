@@ -331,5 +331,275 @@
       "y": -1133.7306,
       "z": -26.983402
     }
+  },
+  "tow_1": {
+    "route": "tow",
+    "label": "Breakdown 1",
+    "coords": {
+      "x": -2480.87,
+      "y": -211.96,
+      "z": 17.4
+    }
+  },
+  "tow_2": {
+    "route": "tow",
+    "label": "Breakdown 2",
+    "coords": {
+      "x": -2723.39,
+      "y": 13.21,
+      "z": 15.13
+    }
+  },
+  "tow_3": {
+    "route": "tow",
+    "label": "Breakdown 3",
+    "coords": {
+      "x": -3169.62,
+      "y": 976.18,
+      "z": 15.04
+    }
+  },
+  "tow_4": {
+    "route": "tow",
+    "label": "Breakdown 4",
+    "coords": {
+      "x": -3139.76,
+      "y": 1078.72,
+      "z": 20.19
+    }
+  },
+  "tow_5": {
+    "route": "tow",
+    "label": "Breakdown 5",
+    "coords": {
+      "x": -1656.94,
+      "y": -246.16,
+      "z": 54.51
+    }
+  },
+  "tow_6": {
+    "route": "tow",
+    "label": "Breakdown 6",
+    "coords": {
+      "x": -1586.66,
+      "y": -647.56,
+      "z": 29.44
+    }
+  },
+  "tow_7": {
+    "route": "tow",
+    "label": "Breakdown 7",
+    "coords": {
+      "x": -1036.15,
+      "y": -491.06,
+      "z": 36.21
+    }
+  },
+  "tow_8": {
+    "route": "tow",
+    "label": "Breakdown 8",
+    "coords": {
+      "x": -1029.19,
+      "y": -475.53,
+      "z": 36.42
+    }
+  },
+  "tow_9": {
+    "route": "tow",
+    "label": "Breakdown 9",
+    "coords": {
+      "x": 75.21,
+      "y": 164.85,
+      "z": 104.69
+    }
+  },
+  "tow_10": {
+    "route": "tow",
+    "label": "Breakdown 10",
+    "coords": {
+      "x": -534.6,
+      "y": -756.72,
+      "z": 31.6
+    }
+  },
+  "tow_11": {
+    "route": "tow",
+    "label": "Breakdown 11",
+    "coords": {
+      "x": 487.24,
+      "y": -30.83,
+      "z": 88.86
+    }
+  },
+  "tow_12": {
+    "route": "tow",
+    "label": "Breakdown 12",
+    "coords": {
+      "x": -772.2,
+      "y": -1281.81,
+      "z": 4.56
+    }
+  },
+  "tow_13": {
+    "route": "tow",
+    "label": "Breakdown 13",
+    "coords": {
+      "x": -663.84,
+      "y": -1206.99,
+      "z": 10.17
+    }
+  },
+  "tow_14": {
+    "route": "tow",
+    "label": "Breakdown 14",
+    "coords": {
+      "x": 719.12,
+      "y": -767.78,
+      "z": 24.89
+    }
+  },
+  "tow_15": {
+    "route": "tow",
+    "label": "Breakdown 15",
+    "coords": {
+      "x": -970.95,
+      "y": -2410.45,
+      "z": 13.34
+    }
+  },
+  "tow_16": {
+    "route": "tow",
+    "label": "Breakdown 16",
+    "coords": {
+      "x": -1067.52,
+      "y": -2571.41,
+      "z": 13.21
+    }
+  },
+  "tow_17": {
+    "route": "tow",
+    "label": "Breakdown 17",
+    "coords": {
+      "x": -619.24,
+      "y": -2207.29,
+      "z": 5.57
+    }
+  },
+  "tow_18": {
+    "route": "tow",
+    "label": "Breakdown 18",
+    "coords": {
+      "x": 1192.08,
+      "y": -1336.91,
+      "z": 35.11
+    }
+  },
+  "tow_19": {
+    "route": "tow",
+    "label": "Breakdown 19",
+    "coords": {
+      "x": -432.81,
+      "y": -2166.05,
+      "z": 9.89
+    }
+  },
+  "tow_20": {
+    "route": "tow",
+    "label": "Breakdown 20",
+    "coords": {
+      "x": -451.82,
+      "y": -2269.35,
+      "z": 7.17
+    }
+  },
+  "tow_21": {
+    "route": "tow",
+    "label": "Breakdown 21",
+    "coords": {
+      "x": 939.27,
+      "y": -2197.54,
+      "z": 30.55
+    }
+  },
+  "tow_22": {
+    "route": "tow",
+    "label": "Breakdown 22",
+    "coords": {
+      "x": -556.11,
+      "y": -1794.73,
+      "z": 22.04
+    }
+  },
+  "news_1": {
+    "route": "news",
+    "label": "Legion Square",
+    "coords": {
+      "x": 195.2,
+      "y": -934.3,
+      "z": 30.7
+    }
+  },
+  "news_2": {
+    "route": "news",
+    "label": "Del Perro Pier",
+    "coords": {
+      "x": -1640.0,
+      "y": -1010.0,
+      "z": 13.0
+    }
+  },
+  "news_3": {
+    "route": "news",
+    "label": "Maze Bank Arena",
+    "coords": {
+      "x": -250.0,
+      "y": -2000.0,
+      "z": 30.0
+    }
+  },
+  "news_4": {
+    "route": "news",
+    "label": "Vespucci Beach",
+    "coords": {
+      "x": -1380.0,
+      "y": -1300.0,
+      "z": 4.5
+    }
+  },
+  "news_5": {
+    "route": "news",
+    "label": "Mirror Park",
+    "coords": {
+      "x": 1100.0,
+      "y": -640.0,
+      "z": 57.0
+    }
+  },
+  "news_6": {
+    "route": "news",
+    "label": "Galileo Observatory",
+    "coords": {
+      "x": -410.0,
+      "y": 1170.0,
+      "z": 325.8
+    }
+  },
+  "news_7": {
+    "route": "news",
+    "label": "Vinewood Boulevard",
+    "coords": {
+      "x": 300.0,
+      "y": 180.0,
+      "z": 104.0
+    }
+  },
+  "news_8": {
+    "route": "news",
+    "label": "Los Santos Airport",
+    "coords": {
+      "x": -1035.0,
+      "y": -2730.0,
+      "z": 20.0
+    }
   }
 }

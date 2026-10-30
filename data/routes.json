@@ -145,5 +145,47 @@
     "seconds": 8,
     "item": "coral",
     "stops": 7
+  },
+  "tow": {
+    "label": "Hayes Towing",
+    "kind": "tow",
+    "job": "",
+    "depot": {
+      "x": 471.39,
+      "y": -1311.03,
+      "z": 29.21
+    },
+    "vehicle": "flatbed",
+    "spawn": {
+      "x": 489.65,
+      "y": -1331.82,
+      "z": 29.33,
+      "heading": 306.5
+    },
+    "pay": 250,
+    "seconds": 8,
+    "item": "",
+    "stops": 5
+  },
+  "news": {
+    "label": "Weazel News",
+    "kind": "random",
+    "job": "",
+    "depot": {
+      "x": -598.25,
+      "y": -929.86,
+      "z": 23.86
+    },
+    "vehicle": "rumpo",
+    "spawn": {
+      "x": -557.0,
+      "y": -925.25,
+      "z": 24.0,
+      "heading": 89
+    },
+    "pay": 180,
+    "seconds": 15,
+    "item": "",
+    "stops": 5
   }
 }

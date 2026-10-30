@@ -18,7 +18,10 @@ const pos = (source: number) => {
   return { x, y, z };
 };
 
-/** A running shift: route, current stop (server picks it), progress, the work vehicle and when the stop began. */
+/**
+ * A running shift: route, current stop (server picks it), progress, the work vehicle and when the stop began; tow
+ * routes also keep the broken-down car waiting at the stop and whether it is on the flatbed.
+ */
 interface Work {
   route: Route;
   stop: Stop;
@@ -26,7 +29,22 @@ interface Work {
   vehicle: number | null;
   index: number;
   since: number;
+  towed: number;
+  loaded: boolean;
 }
+
+/** Cars a tow route finds broken down at its stops. */
+const TOW_MODELS = ["asea", "premier", "emperor", "blista", "ingot", "stanier", "washington", "oracle"];
+
+async function spawnTowed(stop: Stop): Promise<number> {
+  const model = TOW_MODELS[Math.floor(Math.random() * TOW_MODELS.length)] ?? "asea";
+  const car = CreateVehicleServerSetter(GetHashKey(model), "automobile", stop.x, stop.y, stop.z, Math.random() * 360);
+  if (!(await waitFor(() => DoesEntityExist(car) || undefined, 5000).catch(() => false))) return 0;
+  SetVehicleDoorsLocked(car, 2);
+  return car;
+}
+
+const depotStop = (route: Route): Stop => ({ id: "depot", route: route.id, label: route.label, ...route.depot });
 const shifts = new Map<number, Work>();
 
 function nextStop(route: Route, work: Work | null): { stop: Stop; index: number } | null {
@@ -53,6 +71,7 @@ function end(source: number): void {
   const work = shifts.get(source);
   shifts.delete(source);
   if (work?.vehicle && DoesEntityExist(work.vehicle)) DeleteEntity(work.vehicle);
+  if (work?.towed && DoesEntityExist(work.towed)) DeleteEntity(work.towed);
   send(source, null);
 }
 
@@ -74,7 +93,8 @@ onClientCallback(EVENTS.start, { args: ([id]) => (typeof id === "string" ? [id] 
     SetVehicleNumberPlateText(vehicle, `WORK${source}`.slice(0, 8));
     optionalExport("ai-vehiclekeys")?.GiveKeys(source, vehicle);
   }
-  shifts.set(source, { route, stop: first.stop, done: 0, vehicle, index: first.index, since: Date.now() });
+  const towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
+  shifts.set(source, { route, stop: first.stop, done: 0, vehicle, index: first.index, since: Date.now(), towed, loaded: false });
   send(source, shifts.get(source) ?? null);
   return { ok: true };
 });
@@ -84,7 +104,7 @@ onClientCallback(EVENTS.stop, (source) => {
   return { ok: true };
 });
 
-onClientCallback(EVENTS.arrive, { args: ([stopId]) => (typeof stopId === "string" ? [stopId] : null), lock: true }, (source, stopId) => {
+onClientCallback(EVENTS.arrive, { args: ([stopId]) => (typeof stopId === "string" ? [stopId] : null), lock: true }, async (source, stopId) => {
   const work = shifts.get(source);
   if (!work || work.stop.id !== stopId) return fail("JOBS_ERR_GONE");
   const p = pos(source);
@@ -94,6 +114,22 @@ onClientCallback(EVENTS.arrive, { args: ([stopId]) => (typeof stopId === "string
   if (work.route.kind !== "gather" && work.vehicle) {
     const [vx = 0, vy = 0, vz = 0] = GetEntityCoords(work.vehicle);
     if (!DoesEntityExist(work.vehicle) || Math.hypot(vx - p.x, vy - p.y, vz - p.z) > 15) return fail("JOBS_ERR_VEHICLE_FAR");
+  }
+  if (work.route.kind === "tow" && !work.loaded) {
+    if (!work.towed || !DoesEntityExist(work.towed) || !work.vehicle) return fail("JOBS_ERR_GONE");
+    // Only the owner client of the car can attach it.
+    const owner = NetworkGetEntityOwner(work.towed);
+    emitNet(EVENTS.attach, owner > 0 ? owner : source, NetworkGetNetworkIdFromEntity(work.towed), NetworkGetNetworkIdFromEntity(work.vehicle));
+    work.loaded = true;
+    work.stop = depotStop(work.route);
+    work.since = Date.now();
+    send(source, work);
+    return { ok: true };
+  }
+  if (work.route.kind === "tow" && work.towed) {
+    if (DoesEntityExist(work.towed)) DeleteEntity(work.towed);
+    work.towed = 0;
+    work.loaded = false;
   }
   if (work.route.kind === "gather" && work.route.item) {
     const count = 1 + Math.floor(Math.random() * 3);
@@ -117,6 +153,7 @@ onClientCallback(EVENTS.arrive, { args: ([stopId]) => (typeof stopId === "string
   work.stop = next.stop;
   work.index = next.index;
   work.since = Date.now();
+  if (work.route.kind === "tow") work.towed = await spawnTowed(next.stop);
   send(source, work);
   return { ok: true };
 });
@@ -124,5 +161,5 @@ onClientCallback(EVENTS.arrive, { args: ([stopId]) => (typeof stopId === "string
 on("playerDropped", () => end(Number(globalThis.source)));
 on("onResourceStop", (resource: string) => {
   if (resource !== ResourceName) return;
-  for (const work of shifts.values()) if (work.vehicle && DoesEntityExist(work.vehicle)) DeleteEntity(work.vehicle);
+  for (const work of shifts.values()) for (const entity of [work.vehicle, work.towed]) if (entity && DoesEntityExist(entity)) DeleteEntity(entity);
 });

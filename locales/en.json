@@ -27,7 +27,7 @@
   "ADMIN_F_LABEL": "Name",
   "ADMIN_P_LABEL": "Downtown Cab Co.",
   "ADMIN_F_KIND": "Kind",
-  "ADMIN_H_KIND": "Random: the next stop is any other stop (taxi, trucker). In order: stops one after the other (bus). Gather: on foot, items at each stop.",
+  "ADMIN_H_KIND": "Random: the next stop is any other stop (taxi, trucker, news). In order: stops one after the other (bus). Gather: on foot, items at each stop. Towing: a broken-down car waits at the stop, load it and bring it to the depot.",
   "ADMIN_O_RANDOM": "Random stops",
   "ADMIN_O_ORDERED": "Stops in order",
   "ADMIN_O_GATHER": "Gathering on foot",
@@ -65,5 +65,6 @@
   "ADMIN_F_STOP_LABEL": "Name",
   "ADMIN_P_STOP_LABEL": "Legion Square",
   "ADMIN_F_COORDS": "Place",
-  "ADMIN_H_COORDS": "Where the worker stops."
+  "ADMIN_H_COORDS": "Where the worker stops.",
+  "ADMIN_O_TOW": "Towing broken-down cars"
 }

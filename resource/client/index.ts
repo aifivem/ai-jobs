@@ -36,7 +36,7 @@ class Work {
         onExit: () => hidePrompt(id),
       });
       const blip = AddBlipForCoord(route.depot.x, route.depot.y, route.depot.z);
-      SetBlipSprite(blip, route.kind === "gather" ? 478 : 67);
+      SetBlipSprite(blip, route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67);
       SetBlipColour(blip, 5);
       SetBlipScale(blip, 0.65);
       SetBlipAsShortRange(blip, true);
@@ -99,6 +99,16 @@ class Work {
 const work = new Work();
 work.rebuildDepots();
 world.onChange("routes", () => work.rebuildDepots());
+/** The towed car's owner attaches it to the flatbed (attachments replicate from the owner). */
+onServerEvent(
+  EVENTS.attach,
+  { args: ([car, flatbed]): [number, number] | null => (typeof car === "number" && typeof flatbed === "number" ? [car, flatbed] : null) },
+  (car, flatbed) => {
+    if (!NetworkDoesEntityExistWithNetworkId(car) || !NetworkDoesEntityExistWithNetworkId(flatbed)) return;
+    const bed = NetToVeh(flatbed);
+    AttachEntityToEntity(NetToVeh(car), bed, GetEntityBoneIndexByName(bed, "bodyshell"), 0.0, -1.6, 1.0, 0, 0, 0, false, false, false, false, 20, true);
+  },
+);
 onServerEvent(EVENTS.shift, { args: ([raw]) => [raw == null ? null : toShift(raw)] as const }, (shift) => work.set(shift));
 onPromptPressed((id) => {
   if (id === "stop") void work.doStop();

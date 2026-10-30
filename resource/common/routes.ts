@@ -2,8 +2,11 @@ import { int, num, record, str, vec4, type Vec4 } from "@aicore-fivem/lib/shared
 
 /** ai-jobs' contracts and panel content. No natives. */
 
-/** ordered: stops in their order (bus); random: a random next stop (taxi, trucker, garbage); gather: on foot, items per stop. */
-export type RouteKind = "ordered" | "random" | "gather";
+/**
+ * ordered: stops in their order (bus); random: a random next stop (taxi, trucker, garbage, news); gather: on foot,
+ * items per stop; tow: a broken-down car waits at a random stop, goes on the flatbed and is paid at the depot.
+ */
+export type RouteKind = "ordered" | "random" | "gather" | "tow";
 
 export const EVENTS = {
   /** Callback: (routeId) -> { ok } start working at the depot (spawns the work vehicle). */
@@ -14,6 +17,8 @@ export const EVENTS = {
   arrive: "ai-jobs:arrive",
   /** Server -> worker: (shift: Shift | null) the current stop (or the shift ended). */
   shift: "ai-jobs:client:shift",
+  /** Server -> the towed car's owner: (carNetId, flatbedNetId) attach the car to the flatbed. */
+  attach: "ai-jobs:client:attach",
 } as const;
 
 export interface Route {
@@ -53,7 +58,7 @@ export interface Shift {
   netId: number | null;
 }
 
-const KINDS: RouteKind[] = ["ordered", "random", "gather"];
+const KINDS: RouteKind[] = ["ordered", "random", "gather", "tow"];
 
 export function readRoutes(raw: unknown): Map<string, Route> {
   const out = new Map<string, Route>();
