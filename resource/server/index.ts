@@ -1,4 +1,4 @@
-import { AdminPanel, aiLog, aiLogChannels, notify, onClientCallback, optionalExport, resourceExport } from "@aicore-fivem/lib/server";
+import { AdminPanel, aiLog, aiLogChannels, inventory, notify, onClientCallback, optionalExport, resourceExport } from "@aicore-fivem/lib/server";
 import { waitFor } from "@aicore-fivem/lib/shared";
 import { Locale, ResourceName } from "common";
 import { EVENTS, readRoutes, readStops, type Route, type Shift, type Stop } from "common/routes";
@@ -133,7 +133,7 @@ onClientCallback(EVENTS.arrive, { args: ([stopId]) => (typeof stopId === "string
   }
   if (work.route.kind === "gather" && work.route.item) {
     const count = 1 + Math.floor(Math.random() * 3);
-    if (!optionalExport("ai-inventory")?.AddItem(source, work.route.item, count)) return fail("JOBS_ERR_SPACE");
+    if (!inventory.addItem(source, work.route.item, count)) return fail("JOBS_ERR_SPACE");
   } else if (work.route.pay > 0) {
     core.AddMoney(source, "bank", work.route.pay, `work:${work.route.id}`);
     notify(source, Locale("JOBS_PAID", work.route.pay), "success", 2500);

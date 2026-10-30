@@ -1,6 +1,6 @@
 # ai-jobs
 
-Work routes started at a depot: driving routes (taxi, bus, trucker, garbage, news) with a work vehicle and pay per stop, towing (a broken-down car on the flatbed to the depot), and gathering routes on foot (recycle, vineyard, diving) that give items per stop. One engine, every route and stop set in the panel. Depends on ai-core (jobs, money, prompts, progress); uses ai-vehiclekeys and ai-inventory when they run. Research: `docs/research/ai-jobs.md`.
+Work routes started at a depot: driving routes (taxi, bus, trucker, garbage, news) with a work vehicle and pay per stop, towing (a broken-down car on the flatbed to the depot), and gathering routes on foot (recycle, vineyard, diving) that give items per stop. One engine, every route and stop set in the panel. Depends on ai-core (jobs, money, prompts, progress); uses ai-vehiclekeys when it runs and the active inventory through ai-core's inventory layer (lib `inventory`). Research: `docs/research/ai-jobs.md`.
 
 ## Decisions
 
