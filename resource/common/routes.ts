@@ -5,6 +5,7 @@ import {
   str,
   vec4,
   type Vec4,
+  readId,
   readPlacePed,
   type PlacePed,
 } from "@aicore-fivem/lib/shared";
@@ -50,7 +51,33 @@ export interface Route {
   item: string;
   /** Stops in one shift (0 = endless). */
   stops: number;
+  /** Items per gather stop, a random count from `gatherMin` to `gatherMax`. */
+  gatherMin: number;
+  gatherMax: number;
+  /** Cars a tow route finds broken down at its stops. */
+  towModels: string[];
+  /** The depot's map blip. */
+  blip: { sprite: number; color: number; scale: number };
 }
+
+export const DEFAULT_TOW_MODELS = [
+  "asea",
+  "premier",
+  "emperor",
+  "blista",
+  "ingot",
+  "stanier",
+  "washington",
+  "oracle",
+];
+
+/** Depot blip per route kind when the record has no blip of its own. */
+const KIND_SPRITE: Record<RouteKind, number> = {
+  ordered: 67,
+  random: 67,
+  gather: 478,
+  tow: 68,
+};
 
 export interface Stop {
   id: string;
@@ -76,13 +103,19 @@ export function readRoutes(raw: unknown): Map<string, Route> {
   for (const [id, value] of Object.entries(record(raw))) {
     const v = record(value);
     const d = record(v.depot);
+    const kind = KINDS.includes(v.kind as RouteKind)
+      ? (v.kind as RouteKind)
+      : "random";
+    const gatherMin = int(v.gatherMin, 1, 1, 100);
+    const towModels = Array.isArray(v.towModels)
+      ? v.towModels.filter((m): m is string => typeof m === "string")
+      : [];
+    const blip = record(v.blip);
     out.set(id, {
       ped: readPlacePed(v.ped),
       id,
       label: str(v.label, id, 48),
-      kind: KINDS.includes(v.kind as RouteKind)
-        ? (v.kind as RouteKind)
-        : "random",
+      kind,
       job: str(v.job, "", 32),
       depot: { x: num(d.x, 0), y: num(d.y, 0), z: num(d.z, 0) },
       vehicle: str(v.vehicle, "", 32),
@@ -96,6 +129,14 @@ export function readRoutes(raw: unknown): Map<string, Route> {
       seconds: int(v.seconds, 5, 0, 120),
       item: str(v.item, "", 48),
       stops: int(v.stops, 0, 0, 100),
+      gatherMin,
+      gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
+      towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
+      blip: {
+        sprite: int(blip.sprite, KIND_SPRITE[kind], 0, 1000),
+        color: int(blip.color, 5, 0, 100),
+        scale: num(blip.scale, 0.65, 0.3, 2),
+      },
     });
   }
   return out;
@@ -142,6 +183,6 @@ export function toShift(v: unknown): Shift | null {
     },
     done: int(s.done, 0, 0),
     total: int(s.total, 0, 0),
-    netId: typeof s.netId === "number" ? s.netId : null,
+    netId: readId(s.netId),
   };
 }

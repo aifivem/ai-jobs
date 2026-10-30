@@ -1,5 +1,6 @@
 import { PLACE_PED_SPEC, placePedFields } from "@aicore-fivem/lib/shared";
 import type { PanelSchema } from "@aicore-fivem/shared";
+import { DEFAULT_TOW_MODELS } from "common/routes";
 
 /** ai-jobs' panel: work routes and their stops (each stop its own record so its place is set in the world). */
 export const jobsSchema: PanelSchema = {
@@ -21,6 +22,10 @@ export const jobsSchema: PanelSchema = {
         seconds: 5,
         item: "",
         stops: 5,
+        gatherMin: 1,
+        gatherMax: 3,
+        towModels: DEFAULT_TOW_MODELS,
+        blip: { sprite: 67, color: 5, scale: 0.65 },
       },
       sections: {
         ped: PLACE_PED_SPEC,
@@ -34,6 +39,36 @@ export const jobsSchema: PanelSchema = {
         seconds: { type: "number", min: 0, max: 120, integer: true },
         item: { type: "text", lookup: "item", min: 0, max: 48 },
         stops: { type: "number", min: 0, max: 100, integer: true },
+        gatherMin: {
+          type: "number",
+          min: 1,
+          max: 100,
+          integer: true,
+          optional: true,
+        },
+        gatherMax: {
+          type: "number",
+          min: 1,
+          max: 100,
+          integer: true,
+          optional: true,
+        },
+        towModels: {
+          type: "names",
+          max: 40,
+          itemMax: 32,
+          pattern: "^[a-z0-9_]+$",
+          optional: true,
+        },
+        blip: {
+          type: "object",
+          optional: true,
+          fields: {
+            sprite: { type: "number", min: 0, max: 1000, integer: true },
+            color: { type: "number", min: 0, max: 100, integer: true },
+            scale: { type: "number", min: 0.3, max: 2 },
+          },
+        },
       },
     },
     stops: {
@@ -117,6 +152,7 @@ export const jobsSchema: PanelSchema = {
               max: 120,
               unit: "s",
             },
+            { widget: "blip", path: "blip", label: "ADMIN_F_BLIP" },
           ],
         },
         {
@@ -147,6 +183,14 @@ export const jobsSchema: PanelSchema = {
               max: 100_000,
               unit: "$",
             },
+            {
+              widget: "tags",
+              path: "towModels",
+              label: "ADMIN_F_TOW_MODELS",
+              hint: "ADMIN_H_TOW_MODELS",
+              placeholder: "ADMIN_P_VEHICLE",
+              showIf: { path: "kind", values: ["tow"] },
+            },
           ],
         },
         {
@@ -161,6 +205,21 @@ export const jobsSchema: PanelSchema = {
               label: "ADMIN_F_ITEM",
               hint: "ADMIN_H_ITEM",
               placeholder: "ADMIN_P_ITEM",
+            },
+            {
+              widget: "number",
+              path: "gatherMin",
+              label: "ADMIN_F_GATHER_MIN",
+              min: 1,
+              max: 100,
+            },
+            {
+              widget: "number",
+              path: "gatherMax",
+              label: "ADMIN_F_GATHER_MAX",
+              hint: "ADMIN_H_GATHER_MAX",
+              min: 1,
+              max: 100,
             },
           ],
         },

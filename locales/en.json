@@ -51,7 +51,13 @@
   "ADMIN_C_GATHER": "Gathering",
   "ADMIN_C_GATHER_DESC": "Gathering routes give items instead of money.",
   "ADMIN_F_ITEM": "Item per stop",
-  "ADMIN_H_ITEM": "One to three of this item per stop.",
+  "ADMIN_H_ITEM": "Given at each stop, as many as the counts below.",
+  "ADMIN_F_GATHER_MIN": "Fewest items per stop",
+  "ADMIN_F_GATHER_MAX": "Most items per stop",
+  "ADMIN_H_GATHER_MAX": "Each stop gives a random count between the two.",
+  "ADMIN_F_TOW_MODELS": "Broken-down cars",
+  "ADMIN_H_TOW_MODELS": "Spawn names of the cars that wait at the stops; one is picked at random.",
+  "ADMIN_F_BLIP": "Depot blip",
   "ADMIN_P_ITEM": "scrapmetal",
   "ADMIN_TAB_STOPS": "Stops",
   "ADMIN_TAB_STOPS_DESC": "The places a route visits; each stop names its route.",
@@ -67,5 +73,6 @@
   "ADMIN_F_COORDS": "Place",
   "ADMIN_H_COORDS": "Where the worker stops.",
   "ADMIN_O_TOW": "Towing broken-down cars",
-  "ADMIN_DELETE_ROUTE_DESC": "Its stops stay and can be reused."
+  "ADMIN_DELETE_ROUTE_DESC": "Its stops stay and can be reused.",
+  "JOBS_ERR_TOW_LOST": "The towed car is not on the flatbed"
 }

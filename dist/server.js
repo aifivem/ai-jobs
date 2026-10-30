@@ -64,8 +64,19 @@ function vec4(value, fallback) {
 		heading: num(v.heading, fallback.heading)
 	};
 }
-// ../../../packages/lib/src/shared/records.ts
-const isObject = (value) => typeof value == "object" && !!value && !Array.isArray(value);
+// ../../../packages/lib/src/shared/strict.ts
+function readText(value, max) {
+	if (typeof value != "string") return null;
+	let text = value.trim();
+	return text ? text.slice(0, max) : null;
+}
+const oneArg = (read) => ([value]) => {
+	let parsed = read(value);
+	return parsed === null ? null : [parsed];
+}, fail = (error) => ({
+	ok: !1,
+	error
+}), distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z), isObject = (value) => typeof value == "object" && !!value && !Array.isArray(value);
 function readRecords(raw, readOne) {
 	let out = new Map();
 	if (!isObject(raw)) return out;
@@ -312,7 +323,7 @@ const CORE = {
 	clientPlayerLoadedEvent: "ai-core:client:playerLoaded",
 	clientPlayerUnloadedEvent: "ai-core:client:playerUnloaded",
 	clientCharacterPortraitEvent: "ai-core:client:characterPortrait",
-	clientCharacterLookEvent: "ai-core:client:characterLook",
+	characterLooksEvent: "ai-core:client:characterLooks",
 	clientPromptPressedEvent: "ai-core:client:promptPressed",
 	clientCacheEvent: "ai-core:client:cache",
 	clientHudVisibleEvent: "ai-core:client:hudVisible",
@@ -379,6 +390,20 @@ function loadLocaleTexts(resource = GetCurrentResourceName()) {
 }
 // ../../../packages/lib/src/fivem/callbackNames.ts
 const requestEvent = (name) => `aicore:cb:${name}`, responseEvent = (resource) => `aicore:cbr:${resource}`;
+// ../../../packages/lib/src/server/position.ts
+function entityCoords(entity) {
+	let [x = 0, y = 0, z = 0] = GetEntityCoords(entity);
+	return {
+		x,
+		y,
+		z
+	};
+}
+const coordsOf = (source) => entityCoords(GetPlayerPed(String(source)));
+function isNear(source, point, metres) {
+	let [x = 0, y = 0, z = 0] = GetEntityCoords(GetPlayerPed(String(source))), dx = x - point.x, dy = y - point.y, dz = z - point.z;
+	return dx * dx + dy * dy + dz * dz <= metres * metres;
+}
 resourceExport(CORE.resource);
 const log$5 = createLogger(GetCurrentResourceName()), gates = new Set();
 on("playerDropped", () => {
@@ -503,7 +528,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$14 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$15 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -517,7 +542,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$14.GetLookupValues(source);
+			list = core$15.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -720,7 +745,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$13 = resourceExport(CORE.resource), DEFAULT_KEY = "^[a-z0-9_]{2,32}$";
+const core$14 = resourceExport(CORE.resource), DEFAULT_KEY = "^[a-z0-9_]{2,32}$";
 function imported(spec, value) {
 	let base = clone(spec.newRecord ?? {}), out = {};
 	for (let name of Object.keys(spec.sections)) {
@@ -744,7 +769,7 @@ var AdminPanel = class {
 	constructor(schema) {
 		this.schema = schema;
 		for (let [name, spec] of Object.entries(schema.files)) this.load(name, spec);
-		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$13.RegisterAdminPanel(this.resource));
+		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$14.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -878,7 +903,7 @@ var AdminPanel = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$13.AdminPanelChanged({
+		if (core$14.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -916,19 +941,19 @@ function notify(source, text, kind = "info", duration) {
 	emitNet(CORE.clientNotifyEvent, source, notification);
 }
 // ../../../packages/lib/src/server/inventory.ts
-const core$12 = resourceExport(CORE.resource), inventory = {
-	addItem: (inv, item, count = 1, metadata, slot) => core$12.AddItem(inv, item, count, metadata, slot),
-	removeItem: (inv, item, count = 1, metadata, slot) => core$12.RemoveItem(inv, item, count, metadata, slot),
-	getItemCount: (inv, item, metadata) => core$12.GetItemCount(inv, item, metadata),
-	hasItem: (inv, item, count = 1) => core$12.HasItem(inv, item, count),
-	canCarryItem: (inv, item, count = 1, metadata) => core$12.CanCarryItem(inv, item, count, metadata),
-	getItems: (inv) => core$12.GetItems(inv),
-	clearInventory: (inv) => core$12.ClearInventory(inv),
-	registerStash: (name, label, slots, maxWeight, jobs = []) => core$12.RegisterStash(name, label, slots, maxWeight, jobs),
-	openInventory: (source, inv) => core$12.OpenInventory(source, inv),
-	registerUsableItem: (name, handler) => core$12.RegisterUsableItem(name, handler),
-	getItemDefinition: (name) => core$12.GetItemDefinition(name)
-}, core$11 = resourceExport(CORE.resource);
+const core$13 = resourceExport(CORE.resource), inventory = {
+	addItem: (inv, item, count = 1, metadata, slot) => core$13.AddItem(inv, item, count, metadata, slot),
+	removeItem: (inv, item, count = 1, metadata, slot) => core$13.RemoveItem(inv, item, count, metadata, slot),
+	getItemCount: (inv, item, metadata) => core$13.GetItemCount(inv, item, metadata),
+	hasItem: (inv, item, count = 1) => core$13.HasItem(inv, item, count),
+	canCarryItem: (inv, item, count = 1, metadata) => core$13.CanCarryItem(inv, item, count, metadata),
+	getItems: (inv) => core$13.GetItems(inv),
+	clearInventory: (inv) => core$13.ClearInventory(inv),
+	registerStash: (name, label, slots, maxWeight, jobs = []) => core$13.RegisterStash(name, label, slots, maxWeight, jobs),
+	openInventory: (source, inv) => core$13.OpenInventory(source, inv),
+	registerUsableItem: (name, handler) => core$13.RegisterUsableItem(name, handler),
+	getItemDefinition: (name) => core$13.GetItemDefinition(name)
+}, core$12 = resourceExport(CORE.resource);
 var OnlinePlayers = class {
 	players = new Map();
 	onDuty = new Map();
@@ -937,7 +962,7 @@ var OnlinePlayers = class {
 		if (this.started) return;
 		this.started = !0;
 		let load = (source, character) => {
-			this.put(source, character, (core$11.GetJobs(source) ?? []).map((m) => m.job), (core$11.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$11.GetDutyJob(source));
+			this.put(source, character, (core$12.GetJobs(source) ?? []).map((m) => m.job), (core$12.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$12.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => {
 			let player = this.players.get(source);
@@ -946,8 +971,8 @@ var OnlinePlayers = class {
 			let player = this.players.get(source);
 			player && (player.gangs = gangs.map((m) => m.gang));
 		}), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$11.GetLoadedSources()) {
-			let character = core$11.GetCharacter(source);
+		for (let source of core$12.GetLoadedSources()) {
+			let character = core$12.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -990,13 +1015,10 @@ var OnlinePlayers = class {
 		return this.start(), this.onDuty.get(job) ?? EMPTY;
 	}
 };
-const EMPTY = new Set();
-new OnlinePlayers();
-// ../../../packages/lib/src/server/vehicleKeys.ts
-const core$10 = resourceExport(CORE.resource), vehicleKeys = {
-	give: (source, vehicle, purpose = "temporary") => core$10.GiveVehicleKeys(source, vehicle, purpose),
-	remove: (source, vehicle) => core$10.RemoveVehicleKeys(source, vehicle),
-	has: (source, vehicle) => core$10.HasVehicleKeys(source, vehicle)
+const EMPTY = new Set(), online = new OnlinePlayers(), core$11 = resourceExport(CORE.resource), vehicleKeys = {
+	give: (source, vehicle, purpose = "temporary") => core$11.GiveVehicleKeys(source, vehicle, purpose),
+	remove: (source, vehicle) => core$11.RemoveVehicleKeys(source, vehicle),
+	has: (source, vehicle) => core$11.HasVehicleKeys(source, vehicle)
 }, TYPES = new Set([
 	"automobile",
 	"bike",
@@ -1021,8 +1043,14 @@ async function seatPlayer(vehicle, source, seat) {
 		SetPedIntoVehicle(ped, vehicle, seat);
 	}, 2e3, 150).catch(() => !1) : !1;
 }
-function randomPlate() {
-	let digit = () => String(Math.floor(Math.random() * 10)), letter = () => "ABCDEFGHJKLMNPRSTUVWXYZ"[Math.floor(Math.random() * 23)] ?? "A";
+function randomPlate(prefix) {
+	let digit = () => String(Math.floor(Math.random() * 10));
+	if (prefix !== void 0) {
+		let plate = prefix.slice(0, 8);
+		for (; plate.length < 8;) plate += digit();
+		return plate;
+	}
+	let letter = () => "ABCDEFGHJKLMNPRSTUVWXYZ"[Math.floor(Math.random() * 23)] ?? "A";
 	return `${digit()}${digit()}${letter()}${letter()}${letter()}${digit()}${digit()}${digit()}`;
 }
 async function spawnVehicle(options) {
@@ -1047,6 +1075,23 @@ async function spawnVehicle(options) {
 	return await Promise.all(riders.map((r) => seatPlayer(vehicle, r.source, r.seat))), vehicle;
 }
 resourceExport(CORE.resource), createLogger(GetCurrentResourceName());
+const dropped = new Set();
+let listening = !1;
+function onDropped(fn) {
+	listening || (listening = !0, on("playerDropped", () => {
+		let source = Number(globalThis.source);
+		for (let handler of dropped) handler(source);
+	})), dropped.add(fn);
+}
+var PlayerMap = class extends Map {
+	constructor(options = {}) {
+		super(), onDropped((source) => {
+			if (!this.has(source)) return;
+			let value = this.get(source);
+			this.delete(source), options.onDrop?.(source, value);
+		});
+	}
+};
 // ../../../packages/lib/src/server/command.ts
 const resource = GetCurrentResourceName();
 createLogger(resource), new class {
@@ -1074,7 +1119,11 @@ createLogger(resource), new class {
 			if (name === resource) for (let command of this.list) for (let n of command.info.names) emitNet("chat:removeSuggestion", -1, `/${n}`);
 		});
 	}
-}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+// ../../../packages/lib/src/server/index.ts
+function isOnline(source) {
+	return !!GetPlayerName(String(source));
+}
 // resource/common/locale.ts
 const Locale = createLocale(), ResourceName = GetCurrentResourceName();
 IsDuplicityVersion();
@@ -1085,6 +1134,20 @@ const EVENTS = {
 	arrive: "ai-jobs:arrive",
 	shift: "ai-jobs:client:shift",
 	attach: "ai-jobs:client:attach"
+}, DEFAULT_TOW_MODELS = [
+	"asea",
+	"premier",
+	"emperor",
+	"blista",
+	"ingot",
+	"stanier",
+	"washington",
+	"oracle"
+], KIND_SPRITE = {
+	ordered: 67,
+	random: 67,
+	gather: 478,
+	tow: 68
 }, KINDS = [
 	"ordered",
 	"random",
@@ -1094,12 +1157,12 @@ const EVENTS = {
 function readRoutes(raw) {
 	let out = new Map();
 	for (let [id, value] of Object.entries(record(raw))) {
-		let v = record(value), d = record(v.depot);
+		let v = record(value), d = record(v.depot), kind = KINDS.includes(v.kind) ? v.kind : "random", gatherMin = int(v.gatherMin, 1, 1, 100), towModels = Array.isArray(v.towModels) ? v.towModels.filter((m) => typeof m == "string") : [], blip = record(v.blip);
 		out.set(id, {
 			ped: readPlacePed(v.ped),
 			id,
 			label: str(v.label, id, 48),
-			kind: KINDS.includes(v.kind) ? v.kind : "random",
+			kind,
 			job: str(v.job, "", 32),
 			depot: {
 				x: num(d.x, 0),
@@ -1116,7 +1179,15 @@ function readRoutes(raw) {
 			pay: int(v.pay, 0, 0, 1e5),
 			seconds: int(v.seconds, 5, 0, 120),
 			item: str(v.item, "", 48),
-			stops: int(v.stops, 0, 0, 100)
+			stops: int(v.stops, 0, 0, 100),
+			gatherMin,
+			gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
+			towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
+			blip: {
+				sprite: int(blip.sprite, KIND_SPRITE[kind], 0, 1e3),
+				color: int(blip.color, 5, 0, 100),
+				scale: num(blip.scale, .65, .3, 2)
+			}
 		});
 	}
 	return out;
@@ -1162,7 +1233,15 @@ const jobsSchema = {
 				pay: 100,
 				seconds: 5,
 				item: "",
-				stops: 5
+				stops: 5,
+				gatherMin: 1,
+				gatherMax: 3,
+				towModels: DEFAULT_TOW_MODELS,
+				blip: {
+					sprite: 67,
+					color: 5,
+					scale: .65
+				}
 			},
 			sections: {
 				ped: PLACE_PED_SPEC,
@@ -1216,6 +1295,50 @@ const jobsSchema = {
 					min: 0,
 					max: 100,
 					integer: !0
+				},
+				gatherMin: {
+					type: "number",
+					min: 1,
+					max: 100,
+					integer: !0,
+					optional: !0
+				},
+				gatherMax: {
+					type: "number",
+					min: 1,
+					max: 100,
+					integer: !0,
+					optional: !0
+				},
+				towModels: {
+					type: "names",
+					max: 40,
+					itemMax: 32,
+					pattern: "^[a-z0-9_]+$",
+					optional: !0
+				},
+				blip: {
+					type: "object",
+					optional: !0,
+					fields: {
+						sprite: {
+							type: "number",
+							min: 0,
+							max: 1e3,
+							integer: !0
+						},
+						color: {
+							type: "number",
+							min: 0,
+							max: 100,
+							integer: !0
+						},
+						scale: {
+							type: "number",
+							min: .3,
+							max: 2
+						}
+					}
 				}
 			}
 		},
@@ -1326,6 +1449,11 @@ const jobsSchema = {
 						min: 0,
 						max: 120,
 						unit: "s"
+					},
+					{
+						widget: "blip",
+						path: "blip",
+						label: "ADMIN_F_BLIP"
 					}
 				]
 			},
@@ -1356,6 +1484,17 @@ const jobsSchema = {
 						min: 0,
 						max: 1e5,
 						unit: "$"
+					},
+					{
+						widget: "tags",
+						path: "towModels",
+						label: "ADMIN_F_TOW_MODELS",
+						hint: "ADMIN_H_TOW_MODELS",
+						placeholder: "ADMIN_P_VEHICLE",
+						showIf: {
+							path: "kind",
+							values: ["tow"]
+						}
 					}
 				]
 			},
@@ -1363,14 +1502,31 @@ const jobsSchema = {
 				icon: "box",
 				title: "ADMIN_C_GATHER",
 				desc: "ADMIN_C_GATHER_DESC",
-				fields: [{
-					widget: "text",
-					lookup: "item",
-					path: "item",
-					label: "ADMIN_F_ITEM",
-					hint: "ADMIN_H_ITEM",
-					placeholder: "ADMIN_P_ITEM"
-				}]
+				fields: [
+					{
+						widget: "text",
+						lookup: "item",
+						path: "item",
+						label: "ADMIN_F_ITEM",
+						hint: "ADMIN_H_ITEM",
+						placeholder: "ADMIN_P_ITEM"
+					},
+					{
+						widget: "number",
+						path: "gatherMin",
+						label: "ADMIN_F_GATHER_MIN",
+						min: 1,
+						max: 100
+					},
+					{
+						widget: "number",
+						path: "gatherMax",
+						label: "ADMIN_F_GATHER_MAX",
+						hint: "ADMIN_H_GATHER_MAX",
+						min: 1,
+						max: 100
+					}
+				]
 			},
 			{
 				icon: "user",
@@ -1417,52 +1573,36 @@ const jobsSchema = {
 			]
 		}]
 	}]
-}, core = resourceExport("ai-core"), panel = new AdminPanel(jobsSchema), content = {
-	routes: readRoutes(panel.get("routes")),
-	stops: readStops(panel.get("stops"))
-};
-panel.onChange("routes", () => content.routes = readRoutes(panel.get("routes"))), panel.onChange("stops", () => content.stops = readStops(panel.get("stops"))), aiLogChannels({ work: { active: !1 } });
-const fail = (error) => ({
-	ok: !1,
-	error
-}), pos = (source) => {
-	let [x = 0, y = 0, z = 0] = GetEntityCoords(GetPlayerPed(String(source)));
-	return {
-		x,
-		y,
-		z
-	};
-}, TOW_MODELS = [
-	"asea",
-	"premier",
-	"emperor",
-	"blista",
-	"ingot",
-	"stanier",
-	"washington",
-	"oracle"
-];
-async function spawnTowed(stop) {
-	let car = await spawnVehicle({
-		model: TOW_MODELS[Math.floor(Math.random() * TOW_MODELS.length)] ?? "asea",
+}, core = resourceExport("ai-core"), panel = new AdminPanel(jobsSchema), routes = panel.view("routes", readRoutes), stops = panel.view("stops", readStops);
+aiLogChannels({ work: { active: !1 } });
+const readTextId = oneArg((v) => readText(v, 64));
+async function spawnTowed(route, stop) {
+	return await spawnVehicle({
+		model: route.towModels[Math.floor(Math.random() * route.towModels.length)] ?? "asea",
 		type: "automobile",
 		coords: {
 			x: stop.x,
 			y: stop.y,
 			z: stop.z,
 			heading: Math.random() * 360
-		}
-	});
-	return car === null ? 0 : (SetVehicleDoorsLocked(car, 2), car);
+		},
+		locked: !0
+	}) ?? 0;
+}
+function removeEntities(work) {
+	for (let entity of [work.vehicle, work.towed]) entity && DoesEntityExist(entity) && DeleteEntity(entity);
+}
+function assign(work, stop, from) {
+	work.stop = stop, work.since = GetGameTimer(), work.minMs = distance(from, stop) / 60 * 1e3 + work.route.seconds * 800;
 }
 const depotStop = (route) => ({
 	id: "depot",
 	route: route.id,
 	label: route.label,
 	...route.depot
-}), shifts = new Map();
+}), shifts = new PlayerMap({ onDrop: (_source, work) => removeEntities(work) });
 function nextStop(route, work) {
-	let list = content.stops.filter((s) => s.route === route.id);
+	let list = stops.value.filter((s) => s.route === route.id);
 	if (list.length === 0) return null;
 	if (route.kind === "ordered") {
 		let index = work ? (work.index + 1) % list.length : 0, stop = list[index];
@@ -1489,18 +1629,17 @@ function send(source, work) {
 }
 function end(source) {
 	let work = shifts.get(source);
-	shifts.delete(source), work?.vehicle && DoesEntityExist(work.vehicle) && DeleteEntity(work.vehicle), work?.towed && DoesEntityExist(work.towed) && DeleteEntity(work.towed), send(source, null);
+	shifts.delete(source), work && removeEntities(work), send(source, null);
 }
 onClientCallback(EVENTS.start, {
-	args: ([id]) => typeof id == "string" ? [id] : null,
+	args: readTextId,
 	lock: !0
 }, async (source, id) => {
-	let route = content.routes.get(id);
+	let route = routes.value.get(id);
 	if (!route) return fail("JOBS_ERR_GONE");
 	if (shifts.has(source)) return fail("JOBS_ERR_WORKING");
-	let p = pos(source);
-	if (Math.hypot(p.x - route.depot.x, p.y - route.depot.y, p.z - route.depot.z) > 4) return fail("JOBS_ERR_FAR");
-	if (route.job && !(core.GetJobs(source) ?? []).some((m) => m.job === route.job)) return fail("JOBS_ERR_JOB");
+	if (!isNear(source, route.depot, 4)) return fail("JOBS_ERR_FAR");
+	if (route.job && !online.jobs(source).includes(route.job)) return fail("JOBS_ERR_JOB");
 	let first = nextStop(route, null);
 	if (!first) return fail("JOBS_ERR_NO_STOPS");
 	let vehicle = null;
@@ -1512,37 +1651,39 @@ onClientCallback(EVENTS.start, {
 		keysTo: source,
 		purpose: "job"
 	}), vehicle === null)) return fail("JOBS_ERR_VEHICLE");
-	let towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
-	return shifts.set(source, {
+	let towed = route.kind === "tow" ? await spawnTowed(route, first.stop) : 0, work = {
 		route,
 		stop: first.stop,
 		done: 0,
 		vehicle,
 		index: first.index,
-		since: Date.now(),
+		since: 0,
+		minMs: 0,
 		towed,
 		loaded: !1
-	}), send(source, shifts.get(source) ?? null), { ok: !0 };
+	};
+	return isOnline(source) ? (assign(work, first.stop, route.depot), shifts.set(source, work), send(source, work), { ok: !0 }) : (removeEntities(work), fail("JOBS_ERR_GONE"));
 }), onClientCallback(EVENTS.stop, (source) => (end(source), { ok: !0 })), onClientCallback(EVENTS.arrive, {
-	args: ([stopId]) => typeof stopId == "string" ? [stopId] : null,
+	args: readTextId,
 	lock: !0
 }, async (source, stopId) => {
 	let work = shifts.get(source);
 	if (!work || work.stop.id !== stopId) return fail("JOBS_ERR_GONE");
-	let p = pos(source);
-	if (Math.hypot(p.x - work.stop.x, p.y - work.stop.y, p.z - work.stop.z) > 12) return fail("JOBS_ERR_FAR");
-	if (Date.now() - work.since < work.route.seconds * 800) return fail("JOBS_ERR_FAST");
-	if (work.route.kind !== "gather" && work.vehicle) {
-		let [vx = 0, vy = 0, vz = 0] = GetEntityCoords(work.vehicle);
-		if (!DoesEntityExist(work.vehicle) || Math.hypot(vx - p.x, vy - p.y, vz - p.z) > 15) return fail("JOBS_ERR_VEHICLE_FAR");
-	}
+	let p = coordsOf(source);
+	if (distance(p, work.stop) > 12) return fail("JOBS_ERR_FAR");
+	if (GetGameTimer() - work.since < work.minMs) return fail("JOBS_ERR_FAST");
+	if (work.route.kind !== "gather" && work.vehicle && (!DoesEntityExist(work.vehicle) || distance(entityCoords(work.vehicle), p) > 15)) return fail("JOBS_ERR_VEHICLE_FAR");
 	if (work.route.kind === "tow" && !work.loaded) {
 		if (!work.towed || !DoesEntityExist(work.towed) || !work.vehicle) return fail("JOBS_ERR_GONE");
 		let owner = NetworkGetEntityOwner(work.towed);
-		return emitNet(EVENTS.attach, owner > 0 ? owner : source, NetworkGetNetworkIdFromEntity(work.towed), NetworkGetNetworkIdFromEntity(work.vehicle)), work.loaded = !0, work.stop = depotStop(work.route), work.since = Date.now(), send(source, work), { ok: !0 };
+		return emitNet(EVENTS.attach, owner > 0 ? owner : source, NetworkGetNetworkIdFromEntity(work.towed), NetworkGetNetworkIdFromEntity(work.vehicle)), work.loaded = !0, assign(work, depotStop(work.route), work.stop), send(source, work), { ok: !0 };
 	}
-	if (work.route.kind === "tow" && work.towed && (DoesEntityExist(work.towed) && DeleteEntity(work.towed), work.towed = 0, work.loaded = !1), work.route.kind === "gather" && work.route.item) {
-		let count = 1 + Math.floor(Math.random() * 3);
+	if (work.route.kind === "tow" && work.towed) {
+		if (!DoesEntityExist(work.towed) || !work.vehicle || distance(entityCoords(work.towed), entityCoords(work.vehicle)) > 15) return fail("JOBS_ERR_TOW_LOST");
+		DeleteEntity(work.towed), work.towed = 0, work.loaded = !1;
+	}
+	if (work.route.kind === "gather" && work.route.item) {
+		let { gatherMin, gatherMax } = work.route, count = gatherMin + Math.floor(Math.random() * (gatherMax - gatherMin + 1));
 		if (!inventory.addItem(source, work.route.item, count)) return fail("JOBS_ERR_SPACE");
 	} else work.route.pay > 0 && (core.AddMoney(source, "bank", work.route.pay, `work:${work.route.id}`), notify(source, Locale("JOBS_PAID", work.route.pay), "success", 2500));
 	if (work.done++, aiLog("work", `stop ${stopId}`, {
@@ -1550,7 +1691,14 @@ onClientCallback(EVENTS.start, {
 		metadata: { route: work.route.id }
 	}), work.route.stops > 0 && work.done >= work.route.stops) return notify(source, Locale("JOBS_SHIFT_DONE"), "success"), end(source), { ok: !0 };
 	let next = nextStop(work.route, work);
-	return next ? (work.stop = next.stop, work.index = next.index, work.since = Date.now(), work.route.kind === "tow" && (work.towed = await spawnTowed(next.stop)), send(source, work), { ok: !0 }) : (end(source), { ok: !0 });
-}), on("playerDropped", () => end(Number(globalThis.source))), on("onResourceStop", (resource) => {
-	if (resource === ResourceName) for (let work of shifts.values()) for (let entity of [work.vehicle, work.towed]) entity && DoesEntityExist(entity) && DeleteEntity(entity);
+	if (!next) return end(source), { ok: !0 };
+	let from = work.stop;
+	if (work.index = next.index, work.route.kind === "tow") {
+		let towed = await spawnTowed(work.route, next.stop);
+		if (shifts.get(source) !== work) return towed && DoesEntityExist(towed) && DeleteEntity(towed), { ok: !0 };
+		work.towed = towed;
+	}
+	return assign(work, next.stop, from), send(source, work), { ok: !0 };
+}), on("onResourceStop", (resource) => {
+	if (resource === ResourceName) for (let work of shifts.values()) removeEntities(work);
 });

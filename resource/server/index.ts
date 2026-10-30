@@ -2,12 +2,25 @@ import {
   AdminPanel,
   aiLog,
   aiLogChannels,
+  coordsOf,
+  entityCoords,
   inventory,
+  isNear,
+  isOnline,
   notify,
   onClientCallback,
+  online,
+  PlayerMap,
   resourceExport,
   spawnVehicle,
 } from "@aicore-fivem/lib/server";
+import {
+  distance,
+  fail,
+  oneArg,
+  readText,
+  type Vec3,
+} from "@aicore-fivem/lib/shared";
 import { Locale, ResourceName } from "common";
 import {
   EVENTS,
@@ -21,23 +34,15 @@ import { jobsSchema } from "./schema";
 
 const core = resourceExport("ai-core");
 const panel = new AdminPanel(jobsSchema);
-/** Routes and stops, parsed again after every panel change. */
-const content = {
-  routes: readRoutes(panel.get("routes")),
-  stops: readStops(panel.get("stops")),
-};
-panel.onChange(
-  "routes",
-  () => (content.routes = readRoutes(panel.get("routes"))),
-);
-panel.onChange("stops", () => (content.stops = readStops(panel.get("stops"))));
+const routes = panel.view("routes", readRoutes);
+const stops = panel.view("stops", readStops);
 aiLogChannels({ work: { active: false } });
 
-const fail = (error: string) => ({ ok: false as const, error });
-const pos = (source: number) => {
-  const [x = 0, y = 0, z = 0] = GetEntityCoords(GetPlayerPed(String(source)));
-  return { x, y, z };
-};
+/** Fastest plausible travel between stops (m/s, ~216 km/h): a stop reached sooner was teleported to. */
+const MAX_SPEED = 60;
+/** The towed car counts as on the flatbed within this distance of the work vehicle. */
+const TOW_REACH = 15;
+const readTextId = oneArg((v) => readText(v, 64));
 
 /**
  * A running shift: route, current stop (server picks it), progress, the work vehicle and when the stop began; tow
@@ -49,34 +54,38 @@ interface Work {
   done: number;
   vehicle: number | null;
   index: number;
+  /** When the stop was handed out (game timer) and the earliest finish: travel from the last stop plus the stop's time. */
   since: number;
+  minMs: number;
   towed: number;
   loaded: boolean;
 }
 
-/** Cars a tow route finds broken down at its stops. */
-const TOW_MODELS = [
-  "asea",
-  "premier",
-  "emperor",
-  "blista",
-  "ingot",
-  "stanier",
-  "washington",
-  "oracle",
-];
-
-async function spawnTowed(stop: Stop): Promise<number> {
+async function spawnTowed(route: Route, stop: Stop): Promise<number> {
   const model =
-    TOW_MODELS[Math.floor(Math.random() * TOW_MODELS.length)] ?? "asea";
+    route.towModels[Math.floor(Math.random() * route.towModels.length)] ??
+    "asea";
   const car = await spawnVehicle({
     model,
     type: "automobile",
     coords: { x: stop.x, y: stop.y, z: stop.z, heading: Math.random() * 360 },
+    locked: true,
   });
-  if (car === null) return 0;
-  SetVehicleDoorsLocked(car, 2);
-  return car;
+  return car ?? 0;
+}
+
+/** Deletes a shift's work vehicle and towed car. */
+function removeEntities(work: Work): void {
+  for (const entity of [work.vehicle, work.towed])
+    if (entity && DoesEntityExist(entity)) DeleteEntity(entity);
+}
+
+/** Hands out a stop: the earliest finish counts the way there at `MAX_SPEED` plus 80% of the stop's time. */
+function assign(work: Work, stop: Stop, from: Vec3): void {
+  work.stop = stop;
+  work.since = GetGameTimer();
+  work.minMs =
+    (distance(from, stop) / MAX_SPEED) * 1000 + work.route.seconds * 800;
 }
 
 const depotStop = (route: Route): Stop => ({
@@ -85,13 +94,15 @@ const depotStop = (route: Route): Stop => ({
   label: route.label,
   ...route.depot,
 });
-const shifts = new Map<number, Work>();
+const shifts = new PlayerMap<Work>({
+  onDrop: (_source, work) => removeEntities(work),
+});
 
 function nextStop(
   route: Route,
   work: Work | null,
 ): { stop: Stop; index: number } | null {
-  const list = content.stops.filter((s) => s.route === route.id);
+  const list = stops.value.filter((s) => s.route === route.id);
   if (list.length === 0) return null;
   if (route.kind === "ordered") {
     const index = work ? (work.index + 1) % list.length : 0;
@@ -122,32 +133,19 @@ function send(source: number, work: Work | null): void {
 function end(source: number): void {
   const work = shifts.get(source);
   shifts.delete(source);
-  if (work?.vehicle && DoesEntityExist(work.vehicle))
-    DeleteEntity(work.vehicle);
-  if (work?.towed && DoesEntityExist(work.towed)) DeleteEntity(work.towed);
+  if (work) removeEntities(work);
   send(source, null);
 }
 
 onClientCallback(
   EVENTS.start,
-  { args: ([id]) => (typeof id === "string" ? [id] : null), lock: true },
+  { args: readTextId, lock: true },
   async (source, id) => {
-    const route = content.routes.get(id);
+    const route = routes.value.get(id);
     if (!route) return fail("JOBS_ERR_GONE");
     if (shifts.has(source)) return fail("JOBS_ERR_WORKING");
-    const p = pos(source);
-    if (
-      Math.hypot(
-        p.x - route.depot.x,
-        p.y - route.depot.y,
-        p.z - route.depot.z,
-      ) > 4
-    )
-      return fail("JOBS_ERR_FAR");
-    if (
-      route.job &&
-      !(core.GetJobs(source) ?? []).some((m) => m.job === route.job)
-    )
+    if (!isNear(source, route.depot, 4)) return fail("JOBS_ERR_FAR");
+    if (route.job && !online.jobs(source).includes(route.job))
       return fail("JOBS_ERR_JOB");
     const first = nextStop(route, null);
     if (!first) return fail("JOBS_ERR_NO_STOPS");
@@ -163,18 +161,27 @@ onClientCallback(
       });
       if (vehicle === null) return fail("JOBS_ERR_VEHICLE");
     }
-    const towed = route.kind === "tow" ? await spawnTowed(first.stop) : 0;
-    shifts.set(source, {
+    const towed =
+      route.kind === "tow" ? await spawnTowed(route, first.stop) : 0;
+    const work: Work = {
       route,
       stop: first.stop,
       done: 0,
       vehicle,
       index: first.index,
-      since: Date.now(),
+      since: 0,
+      minMs: 0,
       towed,
       loaded: false,
-    });
-    send(source, shifts.get(source) ?? null);
+    };
+    // The player may have dropped while the vehicles spawned: nothing would clean them up later.
+    if (!isOnline(source)) {
+      removeEntities(work);
+      return fail("JOBS_ERR_GONE");
+    }
+    assign(work, first.stop, route.depot);
+    shifts.set(source, work);
+    send(source, work);
     return { ok: true };
   },
 );
@@ -186,29 +193,20 @@ onClientCallback(EVENTS.stop, (source) => {
 
 onClientCallback(
   EVENTS.arrive,
-  {
-    args: ([stopId]) => (typeof stopId === "string" ? [stopId] : null),
-    lock: true,
-  },
+  { args: readTextId, lock: true },
   async (source, stopId) => {
     const work = shifts.get(source);
     if (!work || work.stop.id !== stopId) return fail("JOBS_ERR_GONE");
-    const p = pos(source);
+    const p = coordsOf(source);
+    if (distance(p, work.stop) > 12) return fail("JOBS_ERR_FAR");
+    if (GetGameTimer() - work.since < work.minMs) return fail("JOBS_ERR_FAST");
     if (
-      Math.hypot(p.x - work.stop.x, p.y - work.stop.y, p.z - work.stop.z) > 12
+      work.route.kind !== "gather" &&
+      work.vehicle &&
+      (!DoesEntityExist(work.vehicle) ||
+        distance(entityCoords(work.vehicle), p) > 15)
     )
-      return fail("JOBS_ERR_FAR");
-    // The stop's own time on the client clock, with a little drift allowed.
-    if (Date.now() - work.since < work.route.seconds * 800)
-      return fail("JOBS_ERR_FAST");
-    if (work.route.kind !== "gather" && work.vehicle) {
-      const [vx = 0, vy = 0, vz = 0] = GetEntityCoords(work.vehicle);
-      if (
-        !DoesEntityExist(work.vehicle) ||
-        Math.hypot(vx - p.x, vy - p.y, vz - p.z) > 15
-      )
-        return fail("JOBS_ERR_VEHICLE_FAR");
-    }
+      return fail("JOBS_ERR_VEHICLE_FAR");
     if (work.route.kind === "tow" && !work.loaded) {
       if (!work.towed || !DoesEntityExist(work.towed) || !work.vehicle)
         return fail("JOBS_ERR_GONE");
@@ -221,18 +219,27 @@ onClientCallback(
         NetworkGetNetworkIdFromEntity(work.vehicle),
       );
       work.loaded = true;
-      work.stop = depotStop(work.route);
-      work.since = Date.now();
+      assign(work, depotStop(work.route), work.stop);
       send(source, work);
       return { ok: true };
     }
     if (work.route.kind === "tow" && work.towed) {
-      if (DoesEntityExist(work.towed)) DeleteEntity(work.towed);
+      // Paid only for the car that came along on the flatbed.
+      if (
+        !DoesEntityExist(work.towed) ||
+        !work.vehicle ||
+        distance(entityCoords(work.towed), entityCoords(work.vehicle)) >
+          TOW_REACH
+      )
+        return fail("JOBS_ERR_TOW_LOST");
+      DeleteEntity(work.towed);
       work.towed = 0;
       work.loaded = false;
     }
     if (work.route.kind === "gather" && work.route.item) {
-      const count = 1 + Math.floor(Math.random() * 3);
+      const { gatherMin, gatherMax } = work.route;
+      const count =
+        gatherMin + Math.floor(Math.random() * (gatherMax - gatherMin + 1));
       if (!inventory.addItem(source, work.route.item, count))
         return fail("JOBS_ERR_SPACE");
     } else if (work.route.pay > 0) {
@@ -254,19 +261,24 @@ onClientCallback(
       end(source);
       return { ok: true };
     }
-    work.stop = next.stop;
+    const from = work.stop;
     work.index = next.index;
-    work.since = Date.now();
-    if (work.route.kind === "tow") work.towed = await spawnTowed(next.stop);
+    if (work.route.kind === "tow") {
+      const towed = await spawnTowed(work.route, next.stop);
+      // Dropped or ended meanwhile: the car has no shift to belong to.
+      if (shifts.get(source) !== work) {
+        if (towed && DoesEntityExist(towed)) DeleteEntity(towed);
+        return { ok: true };
+      }
+      work.towed = towed;
+    }
+    assign(work, next.stop, from);
     send(source, work);
     return { ok: true };
   },
 );
 
-on("playerDropped", () => end(Number(globalThis.source)));
 on("onResourceStop", (resource: string) => {
   if (resource !== ResourceName) return;
-  for (const work of shifts.values())
-    for (const entity of [work.vehicle, work.towed])
-      if (entity && DoesEntityExist(entity)) DeleteEntity(entity);
+  for (const work of shifts.values()) removeEntities(work);
 });

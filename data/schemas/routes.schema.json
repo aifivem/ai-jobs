@@ -145,7 +145,7 @@
           "maximum": 120
         },
         "item": {
-          "description": "Item per stop: One to three of this item per stop.",
+          "description": "Item per stop: Given at each stop, as many as the counts below.",
           "type": "string",
           "minLength": 0,
           "maxLength": 48
@@ -155,6 +155,55 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 100
+        },
+        "gatherMin": {
+          "description": "Fewest items per stop",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "gatherMax": {
+          "description": "Most items per stop: Each stop gives a random count between the two.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "towModels": {
+          "description": "Broken-down cars: Spawn names of the cars that wait at the stops; one is picked at random.",
+          "type": "array",
+          "maxItems": 40,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 32,
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "blip": {
+          "description": "Depot blip",
+          "type": "object",
+          "properties": {
+            "sprite": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            },
+            "color": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0.3,
+              "maximum": 2
+            }
+          },
+          "required": [
+            "sprite",
+            "color",
+            "scale"
+          ]
         }
       },
       "required": [

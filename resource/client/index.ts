@@ -1,25 +1,19 @@
 import {
   AdminWorld,
   cache,
+  callAction,
   createBlip,
-  loadLocaleTexts,
   notify,
   onServerEvent,
   Points,
   progress,
-  triggerServerCallback,
 } from "@aicore-fivem/lib/client";
-import { record } from "@aicore-fivem/lib/shared";
+import { readId } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
 import { EVENTS, readRoutes, toShift, type Shift } from "common/routes";
 
 const world = new AdminWorld(["routes", "stops"]);
-const texts = loadLocaleTexts();
-const errorText = (v: unknown, fallback: string): string => {
-  const key =
-    typeof record(v).error === "string" ? String(record(v).error) : fallback;
-  return texts[key] ?? key;
-};
+const routes = world.view("routes", readRoutes);
 
 /**
  * The player's shift: a route blip to the current stop, a point there that runs the stop's progress bar; depots
@@ -33,19 +27,13 @@ class Work {
 
   rebuildDepots(): void {
     this.depots.clear();
-    for (const route of readRoutes(world.get("routes")).values()) {
+    for (const route of routes.value.values()) {
       this.depots.add(`start:${route.id}`, {
         ped: route.ped ?? undefined,
         coords: route.depot,
         label: Locale("JOBS_PROMPT_START", route.label),
         icon: "briefcase",
-        blip: {
-          sprite:
-            route.kind === "gather" ? 478 : route.kind === "tow" ? 68 : 67,
-          color: 5,
-          scale: 0.65,
-          label: route.label,
-        },
+        blip: { ...route.blip, label: route.label },
         canShow: () => this.shift?.route !== route.id,
         onPressed: () => this.toggle(route.id),
       });
@@ -90,7 +78,7 @@ class Work {
   async doStop(): Promise<void> {
     const shift = this.shift;
     if (!shift) return;
-    const route = readRoutes(world.get("routes")).get(shift.route);
+    const route = routes.value.get(shift.route);
     const seconds = route?.seconds ?? 5;
     const gather = route?.kind === "gather";
     if (!gather && cache.vehicle !== false && GetEntitySpeed(cache.vehicle) > 2)
@@ -105,25 +93,19 @@ class Work {
       allowVehicle: !gather,
     });
     if (!ok) return;
-    const result = record(
-      await triggerServerCallback(EVENTS.arrive, [shift.stop.id]).catch(
-        () => null,
-      ),
-    );
-    if (result.ok !== true) notify(errorText(result, "JOBS_ERR_FAR"), "error");
+    await callAction(EVENTS.arrive, [shift.stop.id], {
+      fallback: "JOBS_ERR_FAR",
+    });
   }
 
   async toggle(routeId: string): Promise<void> {
     const working = this.shift?.route === routeId;
-    const result = record(
-      await triggerServerCallback(
-        working ? EVENTS.stop : EVENTS.start,
-        working ? [] : [routeId],
-        10_000,
-      ).catch(() => null),
+    const result = await callAction(
+      working ? EVENTS.stop : EVENTS.start,
+      working ? [] : [routeId],
+      { fallback: "JOBS_ERR_FAR", timeout: 10_000 },
     );
-    if (result.ok !== true)
-      return notify(errorText(result, "JOBS_ERR_FAR"), "error");
+    if (!result) return;
     notify(Locale(working ? "JOBS_STOPPED" : "JOBS_STARTED"), "success", 2500);
   }
 }
@@ -135,10 +117,11 @@ world.onChange("routes", () => work.rebuildDepots());
 onServerEvent(
   EVENTS.attach,
   {
-    args: ([car, flatbed]): [number, number] | null =>
-      typeof car === "number" && typeof flatbed === "number"
-        ? [car, flatbed]
-        : null,
+    args: ([car, flatbed]): [number, number] | null => {
+      const a = readId(car);
+      const b = readId(flatbed);
+      return a === null || b === null ? null : [a, b];
+    },
   },
   (car, flatbed) => {
     if (
