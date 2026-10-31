@@ -1,6 +1,6 @@
 name 'ai-jobs'
 author 'TGIANN'
-version '0.1.0'
+version '0.1.0' -- x-release-please-version
 license 'GPL-3.0-only'
 description 'Work routes: taxi, bus, trucker, garbage, recycling, vineyard, diving'
 repository 'https://github.com/aifivem/ai-jobs'
