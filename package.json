@@ -7,7 +7,7 @@
   "author": {
     "name": "TGIANN"
   },
-  "repository": "github:TGIANN/ai-jobs",
+  "repository": "github:aifivem/ai-jobs",
   "type": "module",
   "fxDependencies": [
     "/onesync",

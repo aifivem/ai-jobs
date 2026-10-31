@@ -1,210 +1,993 @@
 {
   "$schema": "./schemas/stops.schema.json",
-  "taxi_0": {
+  "taxi_pickup_1": {
     "route": "taxi",
-    "label": "Legion Square",
+    "label": "Taxi pickup 1",
     "coords": {
-      "x": 195.2,
-      "y": -934.3,
-      "z": 30.7
+      "x": 257.61,
+      "y": -380.57,
+      "z": 44.71
     }
   },
-  "taxi_1": {
+  "taxi_pickup_2": {
     "route": "taxi",
-    "label": "Pillbox Hill",
+    "label": "Taxi pickup 2",
     "coords": {
-      "x": 298.1,
-      "y": -584.2,
-      "z": 43.3
+      "x": -48.58,
+      "y": -790.12,
+      "z": 44.22
     }
   },
-  "taxi_2": {
+  "taxi_pickup_3": {
     "route": "taxi",
-    "label": "Vinewood Blvd",
+    "label": "Taxi pickup 3",
     "coords": {
-      "x": 301.2,
-      "y": 180.1,
-      "z": 103.9
+      "x": 240.06,
+      "y": -862.77,
+      "z": 29.73
     }
   },
-  "taxi_3": {
+  "taxi_pickup_4": {
     "route": "taxi",
-    "label": "Del Perro Pier",
+    "label": "Taxi pickup 4",
     "coords": {
-      "x": -1610,
-      "y": -1052,
-      "z": 13
+      "x": 826,
+      "y": -1885.26,
+      "z": 29.32
     }
   },
-  "taxi_4": {
+  "taxi_pickup_5": {
     "route": "taxi",
-    "label": "LSIA",
+    "label": "Taxi pickup 5",
     "coords": {
-      "x": -1037.6,
-      "y": -2737.6,
-      "z": 20.2
+      "x": 350.84,
+      "y": -1974.13,
+      "z": 24.52
     }
   },
-  "taxi_5": {
+  "taxi_pickup_6": {
     "route": "taxi",
-    "label": "Mirror Park",
+    "label": "Taxi pickup 6",
     "coords": {
-      "x": 1100.1,
-      "y": -400.3,
-      "z": 67.1
+      "x": -229.11,
+      "y": -2043.16,
+      "z": 27.75
     }
   },
-  "taxi_6": {
+  "taxi_pickup_7": {
     "route": "taxi",
-    "label": "Grove Street",
+    "label": "Taxi pickup 7",
     "coords": {
-      "x": -50.3,
-      "y": -1800.4,
-      "z": 27.3
+      "x": -1053.23,
+      "y": -2716.2,
+      "z": 13.75
     }
   },
-  "taxi_7": {
+  "taxi_pickup_8": {
     "route": "taxi",
-    "label": "Rockford Hills",
+    "label": "Taxi pickup 8",
     "coords": {
-      "x": -700.2,
-      "y": -160.5,
-      "z": 37.6
+      "x": -774.04,
+      "y": -1277.25,
+      "z": 5.15
+    }
+  },
+  "taxi_pickup_9": {
+    "route": "taxi",
+    "label": "Taxi pickup 9",
+    "coords": {
+      "x": -1184.3,
+      "y": -1304.16,
+      "z": 5.24
+    }
+  },
+  "taxi_pickup_10": {
+    "route": "taxi",
+    "label": "Taxi pickup 10",
+    "coords": {
+      "x": -1321.28,
+      "y": -833.8,
+      "z": 16.95
+    }
+  },
+  "taxi_pickup_11": {
+    "route": "taxi",
+    "label": "Taxi pickup 11",
+    "coords": {
+      "x": -1613.99,
+      "y": -1015.82,
+      "z": 13.12
+    }
+  },
+  "taxi_pickup_12": {
+    "route": "taxi",
+    "label": "Taxi pickup 12",
+    "coords": {
+      "x": -1392.74,
+      "y": -584.91,
+      "z": 30.24
+    }
+  },
+  "taxi_pickup_13": {
+    "route": "taxi",
+    "label": "Taxi pickup 13",
+    "coords": {
+      "x": -515.19,
+      "y": -260.29,
+      "z": 35.53
+    }
+  },
+  "taxi_pickup_14": {
+    "route": "taxi",
+    "label": "Taxi pickup 14",
+    "coords": {
+      "x": -760.84,
+      "y": -34.35,
+      "z": 37.83
+    }
+  },
+  "taxi_pickup_15": {
+    "route": "taxi",
+    "label": "Taxi pickup 15",
+    "coords": {
+      "x": -1284.06,
+      "y": 297.52,
+      "z": 64.93
+    }
+  },
+  "taxi_pickup_16": {
+    "route": "taxi",
+    "label": "Taxi pickup 16",
+    "coords": {
+      "x": -808.29,
+      "y": 828.88,
+      "z": 202.89
+    }
+  },
+  "taxi_dropoff_1": {
+    "route": "taxi",
+    "label": "Taxi drop-off 1",
+    "coords": {
+      "x": -1074.39,
+      "y": -266.64,
+      "z": 37.75
+    }
+  },
+  "taxi_dropoff_2": {
+    "route": "taxi",
+    "label": "Taxi drop-off 2",
+    "coords": {
+      "x": -1412.07,
+      "y": -591.75,
+      "z": 30.38
+    }
+  },
+  "taxi_dropoff_3": {
+    "route": "taxi",
+    "label": "Taxi drop-off 3",
+    "coords": {
+      "x": -679.9,
+      "y": -845.01,
+      "z": 23.98
+    }
+  },
+  "taxi_dropoff_4": {
+    "route": "taxi",
+    "label": "Taxi drop-off 4",
+    "coords": {
+      "x": -158.05,
+      "y": -1565.3,
+      "z": 35.06
+    }
+  },
+  "taxi_dropoff_5": {
+    "route": "taxi",
+    "label": "Taxi drop-off 5",
+    "coords": {
+      "x": 442.09,
+      "y": -1684.33,
+      "z": 29.25
+    }
+  },
+  "taxi_dropoff_6": {
+    "route": "taxi",
+    "label": "Taxi drop-off 6",
+    "coords": {
+      "x": 1120.73,
+      "y": -957.31,
+      "z": 47.43
+    }
+  },
+  "taxi_dropoff_7": {
+    "route": "taxi",
+    "label": "Taxi drop-off 7",
+    "coords": {
+      "x": 1238.85,
+      "y": -377.73,
+      "z": 69.03
+    }
+  },
+  "taxi_dropoff_8": {
+    "route": "taxi",
+    "label": "Taxi drop-off 8",
+    "coords": {
+      "x": 922.24,
+      "y": -2224.03,
+      "z": 30.39
+    }
+  },
+  "taxi_dropoff_9": {
+    "route": "taxi",
+    "label": "Taxi drop-off 9",
+    "coords": {
+      "x": 1920.93,
+      "y": 3703.85,
+      "z": 32.63
+    }
+  },
+  "taxi_dropoff_10": {
+    "route": "taxi",
+    "label": "Taxi drop-off 10",
+    "coords": {
+      "x": 1662.55,
+      "y": 4876.71,
+      "z": 42.05
+    }
+  },
+  "taxi_dropoff_11": {
+    "route": "taxi",
+    "label": "Taxi drop-off 11",
+    "coords": {
+      "x": -9.51,
+      "y": 6529.67,
+      "z": 31.37
+    }
+  },
+  "taxi_dropoff_12": {
+    "route": "taxi",
+    "label": "Taxi drop-off 12",
+    "coords": {
+      "x": -3232.7,
+      "y": 1013.16,
+      "z": 12.09
+    }
+  },
+  "taxi_dropoff_13": {
+    "route": "taxi",
+    "label": "Taxi drop-off 13",
+    "coords": {
+      "x": -1604.09,
+      "y": -401.66,
+      "z": 42.35
+    }
+  },
+  "taxi_dropoff_14": {
+    "route": "taxi",
+    "label": "Taxi drop-off 14",
+    "coords": {
+      "x": -586.48,
+      "y": -255.96,
+      "z": 35.91
+    }
+  },
+  "taxi_dropoff_15": {
+    "route": "taxi",
+    "label": "Taxi drop-off 15",
+    "coords": {
+      "x": 23.66,
+      "y": -60.23,
+      "z": 63.62
+    }
+  },
+  "taxi_dropoff_16": {
+    "route": "taxi",
+    "label": "Taxi drop-off 16",
+    "coords": {
+      "x": 550.3,
+      "y": 172.55,
+      "z": 100.11
+    }
+  },
+  "taxi_dropoff_17": {
+    "route": "taxi",
+    "label": "Taxi drop-off 17",
+    "coords": {
+      "x": -1048.55,
+      "y": -2540.58,
+      "z": 13.69
+    }
+  },
+  "taxi_dropoff_18": {
+    "route": "taxi",
+    "label": "Taxi drop-off 18",
+    "coords": {
+      "x": -9.55,
+      "y": -544,
+      "z": 38.63
+    }
+  },
+  "taxi_dropoff_19": {
+    "route": "taxi",
+    "label": "Taxi drop-off 19",
+    "coords": {
+      "x": -7.86,
+      "y": -258.22,
+      "z": 46.9
+    }
+  },
+  "taxi_dropoff_20": {
+    "route": "taxi",
+    "label": "Taxi drop-off 20",
+    "coords": {
+      "x": -743.34,
+      "y": 817.81,
+      "z": 213.6
+    }
+  },
+  "taxi_dropoff_21": {
+    "route": "taxi",
+    "label": "Taxi drop-off 21",
+    "coords": {
+      "x": 218.34,
+      "y": 677.47,
+      "z": 189.26
+    }
+  },
+  "taxi_dropoff_22": {
+    "route": "taxi",
+    "label": "Taxi drop-off 22",
+    "coords": {
+      "x": 263.2,
+      "y": 1138.81,
+      "z": 221.75
+    }
+  },
+  "taxi_dropoff_23": {
+    "route": "taxi",
+    "label": "Taxi drop-off 23",
+    "coords": {
+      "x": 220.64,
+      "y": -1010.81,
+      "z": 29.22
     }
   },
   "bus_0": {
     "route": "bus",
     "label": "Pillbox Hill stop",
     "coords": {
-      "x": 307.3,
-      "y": -766.2,
-      "z": 29.2
+      "x": 304.36,
+      "y": -764.56,
+      "z": 29.31
     }
   },
   "bus_1": {
     "route": "bus",
-    "label": "Legion Square stop",
+    "label": "Chamberlain Hills stop",
     "coords": {
-      "x": 117.5,
-      "y": -783.3,
-      "z": 31.3
+      "x": -110.31,
+      "y": -1686.29,
+      "z": 29.31
     }
   },
   "bus_2": {
     "route": "bus",
-    "label": "Alta stop",
+    "label": "Little Seoul stop",
     "coords": {
-      "x": -109,
-      "y": -1014.6,
-      "z": 27.3
+      "x": -712.83,
+      "y": -824.56,
+      "z": 23.54
     }
   },
   "bus_3": {
     "route": "bus",
-    "label": "Strawberry stop",
+    "label": "Little Seoul north stop",
     "coords": {
-      "x": 269.3,
-      "y": -1250.7,
-      "z": 29.1
+      "x": -692.63,
+      "y": -670.44,
+      "z": 30.86
     }
   },
   "bus_4": {
     "route": "bus",
-    "label": "Davis stop",
+    "label": "Alta stop",
     "coords": {
-      "x": 115.7,
-      "y": -1588.6,
-      "z": 29.2
-    }
-  },
-  "trucker_0": {
-    "route": "trucker",
-    "label": "Cypress Flats warehouse",
-    "coords": {
-      "x": 821,
-      "y": -2149,
-      "z": 28.6
+      "x": -250.14,
+      "y": -886.78,
+      "z": 30.63
     }
   },
   "trucker_1": {
     "route": "trucker",
-    "label": "Elysian Island",
+    "label": "24/7 Supermarket 1",
     "coords": {
-      "x": 213.7,
-      "y": -3121.2,
-      "z": 5.8
+      "x": 26.45,
+      "y": -1315.51,
+      "z": 29.62
     }
   },
   "trucker_2": {
     "route": "trucker",
-    "label": "La Mesa depot",
+    "label": "24/7 Supermarket 2",
     "coords": {
-      "x": 920.2,
-      "y": -1543.2,
-      "z": 30.6
+      "x": -3047.95,
+      "y": 590.71,
+      "z": 7.62
     }
   },
   "trucker_3": {
     "route": "trucker",
-    "label": "Murrieta Heights",
+    "label": "24/7 Supermarket 3",
     "coords": {
-      "x": 1210.2,
-      "y": -1388.3,
-      "z": 35.2
+      "x": -3245.76,
+      "y": 1005.25,
+      "z": 12.83
     }
   },
   "trucker_4": {
     "route": "trucker",
-    "label": "Textile City",
+    "label": "24/7 Supermarket 4",
     "coords": {
-      "x": 458.6,
-      "y": -879,
-      "z": 27.7
+      "x": 1741.76,
+      "y": 6419.61,
+      "z": 35.04
     }
   },
-  "garbage_0": {
-    "route": "garbage",
-    "label": "Strawberry bins",
+  "trucker_5": {
+    "route": "trucker",
+    "label": "24/7 Supermarket 5",
     "coords": {
-      "x": 226.2,
-      "y": -1500.8,
-      "z": 29.1
+      "x": 1963.81,
+      "y": 3750.09,
+      "z": 32.26
+    }
+  },
+  "trucker_6": {
+    "route": "trucker",
+    "label": "24/7 Supermarket 6",
+    "coords": {
+      "x": 541.54,
+      "y": 2663.53,
+      "z": 42.17
+    }
+  },
+  "trucker_7": {
+    "route": "trucker",
+    "label": "24/7 Supermarket 7",
+    "coords": {
+      "x": 2662.19,
+      "y": 3264.95,
+      "z": 55.24
+    }
+  },
+  "trucker_8": {
+    "route": "trucker",
+    "label": "24/7 Supermarket 8",
+    "coords": {
+      "x": 2553.24,
+      "y": 399.73,
+      "z": 108.56
+    }
+  },
+  "trucker_9": {
+    "route": "trucker",
+    "label": "24/7 Supermarket 9",
+    "coords": {
+      "x": 379.97,
+      "y": 357.3,
+      "z": 102.56
+    }
+  },
+  "trucker_10": {
+    "route": "trucker",
+    "label": "LTD Gasoline 1",
+    "coords": {
+      "x": -40.51,
+      "y": -1747.45,
+      "z": 29.29
+    }
+  },
+  "trucker_11": {
+    "route": "trucker",
+    "label": "LTD Gasoline 2",
+    "coords": {
+      "x": -702.89,
+      "y": -917.44,
+      "z": 19.21
+    }
+  },
+  "trucker_12": {
+    "route": "trucker",
+    "label": "LTD Gasoline 3",
+    "coords": {
+      "x": -1829.29,
+      "y": 801.49,
+      "z": 138.41
+    }
+  },
+  "trucker_13": {
+    "route": "trucker",
+    "label": "LTD Gasoline 4",
+    "coords": {
+      "x": 1160.62,
+      "y": -312.06,
+      "z": 69.28
+    }
+  },
+  "trucker_14": {
+    "route": "trucker",
+    "label": "LTD Gasoline 5",
+    "coords": {
+      "x": 1702.68,
+      "y": 4917.28,
+      "z": 42.22
+    }
+  },
+  "trucker_15": {
+    "route": "trucker",
+    "label": "Rob's Liquor 1",
+    "coords": {
+      "x": -1226.92,
+      "y": -901.82,
+      "z": 12.28
+    }
+  },
+  "trucker_16": {
+    "route": "trucker",
+    "label": "Rob's Liquor 2",
+    "coords": {
+      "x": -1468.29,
+      "y": -387.61,
+      "z": 38.79
+    }
+  },
+  "trucker_17": {
+    "route": "trucker",
+    "label": "Rob's Liquor 3",
+    "coords": {
+      "x": -2961.49,
+      "y": 376.25,
+      "z": 15.02
+    }
+  },
+  "trucker_18": {
+    "route": "trucker",
+    "label": "Rob's Liquor 4",
+    "coords": {
+      "x": 1194.52,
+      "y": 2722.21,
+      "z": 38.62
+    }
+  },
+  "trucker_19": {
+    "route": "trucker",
+    "label": "Rob's Liquor 5",
+    "coords": {
+      "x": 1129.73,
+      "y": -989.27,
+      "z": 45.97
+    }
+  },
+  "trucker_20": {
+    "route": "trucker",
+    "label": "Hardware Store 1",
+    "coords": {
+      "x": 89.15,
+      "y": -1745.29,
+      "z": 30.09
+    }
+  },
+  "trucker_21": {
+    "route": "trucker",
+    "label": "Hardware Store 2",
+    "coords": {
+      "x": 2704.68,
+      "y": 3457.21,
+      "z": 55.54
+    }
+  },
+  "trucker_22": {
+    "route": "trucker",
+    "label": "Hardware Store 3",
+    "coords": {
+      "x": -438.25,
+      "y": 6146.9,
+      "z": 31.48
+    }
+  },
+  "trucker_23": {
+    "route": "trucker",
+    "label": "Ammunation 1",
+    "coords": {
+      "x": -660.61,
+      "y": -938.14,
+      "z": 21.83
+    }
+  },
+  "trucker_24": {
+    "route": "trucker",
+    "label": "Ammunation 2",
+    "coords": {
+      "x": 820.97,
+      "y": -2146.7,
+      "z": 28.71
+    }
+  },
+  "trucker_25": {
+    "route": "trucker",
+    "label": "Ammunation 3",
+    "coords": {
+      "x": 1687.17,
+      "y": 3755.47,
+      "z": 34.34
+    }
+  },
+  "trucker_26": {
+    "route": "trucker",
+    "label": "Ammunation 4",
+    "coords": {
+      "x": -341.72,
+      "y": 6098.49,
+      "z": 31.32
+    }
+  },
+  "trucker_27": {
+    "route": "trucker",
+    "label": "Ammunation 5",
+    "coords": {
+      "x": 249,
+      "y": -50.64,
+      "z": 69.94
+    }
+  },
+  "trucker_28": {
+    "route": "trucker",
+    "label": "Ammunation 6",
+    "coords": {
+      "x": -5.82,
+      "y": -1107.48,
+      "z": 29
+    }
+  },
+  "trucker_29": {
+    "route": "trucker",
+    "label": "Ammunation 7",
+    "coords": {
+      "x": 2578.77,
+      "y": 285.53,
+      "z": 108.61
+    }
+  },
+  "trucker_30": {
+    "route": "trucker",
+    "label": "Ammunation 8",
+    "coords": {
+      "x": -1127.67,
+      "y": 2708.18,
+      "z": 18.8
+    }
+  },
+  "trucker_31": {
+    "route": "trucker",
+    "label": "Ammunation 9",
+    "coords": {
+      "x": 847.83,
+      "y": -1020.36,
+      "z": 27.88
+    }
+  },
+  "trucker_32": {
+    "route": "trucker",
+    "label": "Ammunation 10",
+    "coords": {
+      "x": -1302.44,
+      "y": -385.23,
+      "z": 36.62
+    }
+  },
+  "trucker_33": {
+    "route": "trucker",
+    "label": "Ammunation 11",
+    "coords": {
+      "x": -3183.6,
+      "y": 1084.35,
+      "z": 20.84
+    }
+  },
+  "trucker_34": {
+    "route": "trucker",
+    "label": "Smoke On The Water",
+    "coords": {
+      "x": -1162.13,
+      "y": -1568.57,
+      "z": 4.39
+    }
+  },
+  "trucker_35": {
+    "route": "trucker",
+    "label": "Sea Word",
+    "coords": {
+      "x": -1674.18,
+      "y": -1073.7,
+      "z": 13.15
+    }
+  },
+  "trucker_36": {
+    "route": "trucker",
+    "label": "Leisure Shop",
+    "coords": {
+      "x": -1507.64,
+      "y": 1505.52,
+      "z": 115.29
+    }
+  },
+  "trucker_37": {
+    "route": "trucker",
+    "label": "Police Shop",
+    "coords": {
+      "x": 459.0441,
+      "y": -1008.0366,
+      "z": 28.2627
+    }
+  },
+  "trucker_38": {
+    "route": "trucker",
+    "label": "Ambulance Shop",
+    "coords": {
+      "x": 283.5821,
+      "y": -614.857,
+      "z": 43.3792
+    }
+  },
+  "trucker_39": {
+    "route": "trucker",
+    "label": "Mechanic Shop 1",
+    "coords": {
+      "x": -354.3936,
+      "y": -128.2882,
+      "z": 39.4307
+    }
+  },
+  "trucker_40": {
+    "route": "trucker",
+    "label": "Mechanic Shop 2",
+    "coords": {
+      "x": 1189.9852,
+      "y": 2651.1873,
+      "z": 37.8351
+    }
+  },
+  "trucker_41": {
+    "route": "trucker",
+    "label": "Mechanic Shop 3",
+    "coords": {
+      "x": -1131.9661,
+      "y": -1972.0144,
+      "z": 13.1603
+    }
+  },
+  "trucker_42": {
+    "route": "trucker",
+    "label": "Bennys",
+    "coords": {
+      "x": -232.5028,
+      "y": -1311.7202,
+      "z": 31.296
+    }
+  },
+  "trucker_43": {
+    "route": "trucker",
+    "label": "Beeker's Garage",
+    "coords": {
+      "x": 119.3033,
+      "y": 6626.7358,
+      "z": 31.9558
+    }
+  },
+  "trucker_44": {
+    "route": "trucker",
+    "label": "Prison Canteen",
+    "coords": {
+      "x": 1845.8175,
+      "y": 2585.9312,
+      "z": 45.6721
+    }
+  },
+  "trucker_45": {
+    "route": "trucker",
+    "label": "Black Market",
+    "coords": {
+      "x": -428.6385,
+      "y": -1728.1962,
+      "z": 19.7838
     }
   },
   "garbage_1": {
     "route": "garbage",
-    "label": "Davis bins",
+    "label": "Forum Drive",
     "coords": {
-      "x": 126.2,
-      "y": -1650,
-      "z": 29.1
+      "x": -168.07,
+      "y": -1662.8,
+      "z": 33.31
     }
   },
   "garbage_2": {
     "route": "garbage",
-    "label": "Little Seoul bins",
+    "label": "Grove Street",
     "coords": {
-      "x": -597.1,
-      "y": -1062.8,
-      "z": 22.3
+      "x": 118.06,
+      "y": -1943.96,
+      "z": 20.43
     }
   },
   "garbage_3": {
     "route": "garbage",
-    "label": "Vespucci bins",
+    "label": "Jamestown Street",
     "coords": {
-      "x": -1155.5,
-      "y": -1353,
-      "z": 5
+      "x": 297.94,
+      "y": -2018.26,
+      "z": 20.49
     }
   },
   "garbage_4": {
     "route": "garbage",
-    "label": "Mission Row bins",
+    "label": "Davis Avenue",
     "coords": {
-      "x": 410.1,
-      "y": -1000.2,
-      "z": 29.2
+      "x": 424.98,
+      "y": -1523.57,
+      "z": 29.28
+    }
+  },
+  "garbage_5": {
+    "route": "garbage",
+    "label": "Little Bighorn Avenue",
+    "coords": {
+      "x": 488.49,
+      "y": -1284.1,
+      "z": 29.24
+    }
+  },
+  "garbage_6": {
+    "route": "garbage",
+    "label": "Vespucci Boulevard",
+    "coords": {
+      "x": 307.47,
+      "y": -1033.6,
+      "z": 29.03
+    }
+  },
+  "garbage_7": {
+    "route": "garbage",
+    "label": "Elgin Avenue",
+    "coords": {
+      "x": 239.19,
+      "y": -681.5,
+      "z": 37.15
+    }
+  },
+  "garbage_8": {
+    "route": "garbage",
+    "label": "Elgin Avenue 2",
+    "coords": {
+      "x": 543.51,
+      "y": -204.41,
+      "z": 54.16
+    }
+  },
+  "garbage_9": {
+    "route": "garbage",
+    "label": "Power Street",
+    "coords": {
+      "x": 268.72,
+      "y": -25.92,
+      "z": 73.36
+    }
+  },
+  "garbage_10": {
+    "route": "garbage",
+    "label": "Alta Street",
+    "coords": {
+      "x": 267.03,
+      "y": 276.01,
+      "z": 105.54
+    }
+  },
+  "garbage_11": {
+    "route": "garbage",
+    "label": "Didion Drive",
+    "coords": {
+      "x": 21.65,
+      "y": 375.44,
+      "z": 112.67
+    }
+  },
+  "garbage_12": {
+    "route": "garbage",
+    "label": "Milton Road",
+    "coords": {
+      "x": -546.9,
+      "y": 286.57,
+      "z": 82.85
+    }
+  },
+  "garbage_13": {
+    "route": "garbage",
+    "label": "Eastbourne Way",
+    "coords": {
+      "x": -683.23,
+      "y": -169.62,
+      "z": 37.74
+    }
+  },
+  "garbage_14": {
+    "route": "garbage",
+    "label": "Eastbourne Way 2",
+    "coords": {
+      "x": -771.02,
+      "y": -218.06,
+      "z": 37.05
+    }
+  },
+  "garbage_15": {
+    "route": "garbage",
+    "label": "Industry Passage",
+    "coords": {
+      "x": -1057.06,
+      "y": -515.45,
+      "z": 35.83
+    }
+  },
+  "garbage_16": {
+    "route": "garbage",
+    "label": "Boulevard Del Perro",
+    "coords": {
+      "x": -1558.64,
+      "y": -478.22,
+      "z": 35.18
+    }
+  },
+  "garbage_17": {
+    "route": "garbage",
+    "label": "Sandcastle Way",
+    "coords": {
+      "x": -1350,
+      "y": -895.64,
+      "z": 13.36
+    }
+  },
+  "garbage_18": {
+    "route": "garbage",
+    "label": "Magellan Avenue",
+    "coords": {
+      "x": -1243.73,
+      "y": -1359.72,
+      "z": 3.93
+    }
+  },
+  "garbage_19": {
+    "route": "garbage",
+    "label": "Palomino Avenue",
+    "coords": {
+      "x": -845.87,
+      "y": -1113.07,
+      "z": 6.91
+    }
+  },
+  "garbage_20": {
+    "route": "garbage",
+    "label": "South Rockford Drive",
+    "coords": {
+      "x": -635.21,
+      "y": -1226.45,
+      "z": 11.8
+    }
+  },
+  "garbage_21": {
+    "route": "garbage",
+    "label": "South Arsenal Street",
+    "coords": {
+      "x": -587.74,
+      "y": -1739.13,
+      "z": 22.47
     }
   },
   "recycle_0": {
@@ -234,103 +1017,409 @@
       "z": 31.4
     }
   },
-  "vineyard_0": {
-    "route": "vineyard",
-    "label": "Grape vines",
-    "coords": {
-      "x": -1880.2,
-      "y": 2100.5,
-      "z": 139
-    }
-  },
   "vineyard_1": {
     "route": "vineyard",
     "label": "Grape vines",
     "coords": {
-      "x": -1862.4,
-      "y": 2110.3,
-      "z": 136.2
+      "x": -1875.41,
+      "y": 2100.37,
+      "z": 138.86
     }
   },
   "vineyard_2": {
     "route": "vineyard",
     "label": "Grape vines",
     "coords": {
-      "x": -1845,
-      "y": 2120,
-      "z": 133.5
+      "x": -1908.69,
+      "y": 2107.48,
+      "z": 131.31
     }
   },
   "vineyard_3": {
     "route": "vineyard",
     "label": "Grape vines",
     "coords": {
-      "x": -1830.6,
-      "y": 2130.2,
-      "z": 130.8
+      "x": -1866.04,
+      "y": 2112.64,
+      "z": 134.41
+    }
+  },
+  "vineyard_4": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1907.76,
+      "y": 2125.35,
+      "z": 124.03
+    }
+  },
+  "vineyard_5": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1850.31,
+      "y": 2142.95,
+      "z": 122.3
+    }
+  },
+  "vineyard_6": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1888.22,
+      "y": 2164.51,
+      "z": 114.81
+    }
+  },
+  "vineyard_7": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1835.52,
+      "y": 2180.59,
+      "z": 104.88
+    }
+  },
+  "vineyard_8": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1891.98,
+      "y": 2208.35,
+      "z": 94.56
+    }
+  },
+  "vineyard_9": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1720.37,
+      "y": 2182.03,
+      "z": 106.18
+    }
+  },
+  "vineyard_10": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1808.52,
+      "y": 2173.14,
+      "z": 107.63
+    }
+  },
+  "vineyard_11": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1784.22,
+      "y": 2222.8,
+      "z": 92.86
+    }
+  },
+  "vineyard_12": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1889.13,
+      "y": 2250.05,
+      "z": 79.63
+    }
+  },
+  "vineyard_13": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1861.16,
+      "y": 2254.32,
+      "z": 81.04
+    }
+  },
+  "vineyard_14": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1886.75,
+      "y": 2272.45,
+      "z": 70.81
+    }
+  },
+  "vineyard_15": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1845.49,
+      "y": 2274.63,
+      "z": 73.33
+    }
+  },
+  "vineyard_16": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1687.28,
+      "y": 2195.76,
+      "z": 97.87
+    }
+  },
+  "vineyard_17": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1741.18,
+      "y": 2173.22,
+      "z": 114.39
+    }
+  },
+  "vineyard_18": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1743.17,
+      "y": 2141.11,
+      "z": 121.18
+    }
+  },
+  "vineyard_19": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1813.84,
+      "y": 2089.57,
+      "z": 134.21
+    }
+  },
+  "vineyard_20": {
+    "route": "vineyard",
+    "label": "Grape vines",
+    "coords": {
+      "x": -1698.71,
+      "y": 2150.65,
+      "z": 110.41
     }
   },
   "diving_1": {
     "route": "diving",
-    "label": "Coral reef 1",
+    "label": "Coral area 1 reef 1",
     "coords": {
-      "x": -1876.6805,
-      "y": -1184.799,
-      "z": -17.84077
+      "x": -2849.25,
+      "y": -377.58,
+      "z": -40.23
     }
   },
   "diving_2": {
     "route": "diving",
-    "label": "Coral reef 2",
+    "label": "Coral area 1 reef 2",
     "coords": {
-      "x": -1887.7748,
-      "y": -1196.6993,
-      "z": -23.067642
+      "x": -2838.43,
+      "y": -363.63,
+      "z": -39.45
     }
   },
   "diving_3": {
     "route": "diving",
-    "label": "Coral reef 3",
+    "label": "Coral area 1 reef 3",
     "coords": {
-      "x": -1882.6532,
-      "y": -1201.3375,
-      "z": -18.995111
+      "x": -2887.04,
+      "y": -394.87,
+      "z": -40.91
     }
   },
   "diving_4": {
     "route": "diving",
-    "label": "Coral reef 4",
+    "label": "Coral area 1 reef 4",
     "coords": {
-      "x": -1903.2726,
-      "y": -1208.6017,
-      "z": -22.02567
+      "x": -2808.99,
+      "y": -385.56,
+      "z": -39.32
     }
   },
   "diving_5": {
     "route": "diving",
-    "label": "Coral reef 5",
+    "label": "Coral area 2 reef 1",
     "coords": {
-      "x": -1906.6615,
-      "y": -1213.6461,
-      "z": -19.387955
+      "x": -3275.03,
+      "y": -38.58,
+      "z": -19.21
     }
   },
   "diving_6": {
     "route": "diving",
-    "label": "Coral reef 6",
+    "label": "Coral area 2 reef 2",
     "coords": {
-      "x": -1938.5804,
-      "y": -1160.3507,
-      "z": -25.577545
+      "x": -3273.73,
+      "y": -76,
+      "z": -26.81
     }
   },
   "diving_7": {
     "route": "diving",
-    "label": "Coral reef 7",
+    "label": "Coral area 2 reef 3",
     "coords": {
-      "x": -1949.4926,
-      "y": -1133.7306,
-      "z": -26.983402
+      "x": -3346.53,
+      "y": -50.4,
+      "z": -35.84
+    }
+  },
+  "diving_8": {
+    "route": "diving",
+    "label": "Coral area 3 reef 1",
+    "coords": {
+      "x": -3388.01,
+      "y": 1635.88,
+      "z": -39.41
+    }
+  },
+  "diving_9": {
+    "route": "diving",
+    "label": "Coral area 3 reef 2",
+    "coords": {
+      "x": -3354.19,
+      "y": 1549.3,
+      "z": -38.21
+    }
+  },
+  "diving_10": {
+    "route": "diving",
+    "label": "Coral area 3 reef 3",
+    "coords": {
+      "x": -3326.04,
+      "y": 1636.43,
+      "z": -40.98
+    }
+  },
+  "diving_11": {
+    "route": "diving",
+    "label": "Coral area 4 reef 1",
+    "coords": {
+      "x": 2978.05,
+      "y": -1509.07,
+      "z": -24.96
+    }
+  },
+  "diving_12": {
+    "route": "diving",
+    "label": "Coral area 4 reef 2",
+    "coords": {
+      "x": 3004.42,
+      "y": -1576.95,
+      "z": -29.36
+    }
+  },
+  "diving_13": {
+    "route": "diving",
+    "label": "Coral area 4 reef 3",
+    "coords": {
+      "x": 2951.65,
+      "y": -1560.69,
+      "z": -28.36
+    }
+  },
+  "diving_14": {
+    "route": "diving",
+    "label": "Coral area 5 reef 1",
+    "coords": {
+      "x": 3421.69,
+      "y": 1976.54,
+      "z": -50.64
+    }
+  },
+  "diving_15": {
+    "route": "diving",
+    "label": "Coral area 5 reef 2",
+    "coords": {
+      "x": 3424.07,
+      "y": 1957.46,
+      "z": -53.04
+    }
+  },
+  "diving_16": {
+    "route": "diving",
+    "label": "Coral area 5 reef 3",
+    "coords": {
+      "x": 3434.65,
+      "y": 1993.73,
+      "z": -49.84
+    }
+  },
+  "diving_17": {
+    "route": "diving",
+    "label": "Coral area 5 reef 4",
+    "coords": {
+      "x": 3415.42,
+      "y": 1965.25,
+      "z": -52.04
+    }
+  },
+  "diving_18": {
+    "route": "diving",
+    "label": "Coral area 6 reef 1",
+    "coords": {
+      "x": 2724,
+      "y": -2134.95,
+      "z": -19.33
+    }
+  },
+  "diving_19": {
+    "route": "diving",
+    "label": "Coral area 6 reef 2",
+    "coords": {
+      "x": 2710.68,
+      "y": -2156.06,
+      "z": -18.63
+    }
+  },
+  "diving_20": {
+    "route": "diving",
+    "label": "Coral area 6 reef 3",
+    "coords": {
+      "x": 2702.84,
+      "y": -2139.29,
+      "z": -18.51
+    }
+  },
+  "diving_21": {
+    "route": "diving",
+    "label": "Coral area 6 reef 4",
+    "coords": {
+      "x": 2736.27,
+      "y": -2153.91,
+      "z": -20.88
+    }
+  },
+  "diving_22": {
+    "route": "diving",
+    "label": "Coral area 7 reef 1",
+    "coords": {
+      "x": 542.31,
+      "y": 7245.37,
+      "z": -30.01
+    }
+  },
+  "diving_23": {
+    "route": "diving",
+    "label": "Coral area 7 reef 2",
+    "coords": {
+      "x": 528.21,
+      "y": 7223.26,
+      "z": -29.51
+    }
+  },
+  "diving_24": {
+    "route": "diving",
+    "label": "Coral area 7 reef 3",
+    "coords": {
+      "x": 510.36,
+      "y": 7254.97,
+      "z": -32.11
+    }
+  },
+  "diving_25": {
+    "route": "diving",
+    "label": "Coral area 7 reef 4",
+    "coords": {
+      "x": 525.37,
+      "y": 7259.12,
+      "z": -30.51
     }
   },
   "tow_1": {
@@ -529,6 +1618,168 @@
       "x": -556.11,
       "y": -1794.73,
       "z": 22.04
+    }
+  },
+  "tow_23": {
+    "route": "tow",
+    "label": "Breakdown 23",
+    "coords": {
+      "x": 591.74,
+      "y": -2628.22,
+      "z": 5.57
+    }
+  },
+  "tow_24": {
+    "route": "tow",
+    "label": "Breakdown 24",
+    "coords": {
+      "x": 1654.52,
+      "y": -2535.83,
+      "z": 74.49
+    }
+  },
+  "tow_25": {
+    "route": "tow",
+    "label": "Breakdown 25",
+    "coords": {
+      "x": 1642.61,
+      "y": -2413.32,
+      "z": 93.14
+    }
+  },
+  "tow_26": {
+    "route": "tow",
+    "label": "Breakdown 26",
+    "coords": {
+      "x": 1371.32,
+      "y": -2549.53,
+      "z": 47.58
+    }
+  },
+  "tow_27": {
+    "route": "tow",
+    "label": "Breakdown 27",
+    "coords": {
+      "x": 383.84,
+      "y": -1652.87,
+      "z": 37.28
+    }
+  },
+  "tow_28": {
+    "route": "tow",
+    "label": "Breakdown 28",
+    "coords": {
+      "x": 27.22,
+      "y": -1030.88,
+      "z": 29.41
+    }
+  },
+  "tow_29": {
+    "route": "tow",
+    "label": "Breakdown 29",
+    "coords": {
+      "x": 229.26,
+      "y": -365.91,
+      "z": 43.75
+    }
+  },
+  "tow_30": {
+    "route": "tow",
+    "label": "Breakdown 30",
+    "coords": {
+      "x": -85.81,
+      "y": -51.67,
+      "z": 61.11
+    }
+  },
+  "tow_31": {
+    "route": "tow",
+    "label": "Breakdown 31",
+    "coords": {
+      "x": -4.6,
+      "y": -670.27,
+      "z": 31.86
+    }
+  },
+  "tow_32": {
+    "route": "tow",
+    "label": "Breakdown 32",
+    "coords": {
+      "x": -111.9,
+      "y": 91.97,
+      "z": 71.08
+    }
+  },
+  "tow_33": {
+    "route": "tow",
+    "label": "Breakdown 33",
+    "coords": {
+      "x": -314.26,
+      "y": -698.23,
+      "z": 32.55
+    }
+  },
+  "tow_34": {
+    "route": "tow",
+    "label": "Breakdown 34",
+    "coords": {
+      "x": -366.91,
+      "y": 115.54,
+      "z": 65.58
+    }
+  },
+  "tow_35": {
+    "route": "tow",
+    "label": "Breakdown 35",
+    "coords": {
+      "x": -592.07,
+      "y": 138.21,
+      "z": 60.07
+    }
+  },
+  "tow_36": {
+    "route": "tow",
+    "label": "Breakdown 36",
+    "coords": {
+      "x": -1613.86,
+      "y": 18.76,
+      "z": 61.8
+    }
+  },
+  "tow_37": {
+    "route": "tow",
+    "label": "Breakdown 37",
+    "coords": {
+      "x": -1709.8,
+      "y": 55.11,
+      "z": 65.71
+    }
+  },
+  "tow_38": {
+    "route": "tow",
+    "label": "Breakdown 38",
+    "coords": {
+      "x": -521.89,
+      "y": -266.78,
+      "z": 34.94
+    }
+  },
+  "tow_39": {
+    "route": "tow",
+    "label": "Breakdown 39",
+    "coords": {
+      "x": -451.09,
+      "y": -333.52,
+      "z": 34.02
+    }
+  },
+  "tow_40": {
+    "route": "tow",
+    "label": "Breakdown 40",
+    "coords": {
+      "x": 322.36,
+      "y": -1900.5,
+      "z": 25.77
     }
   },
   "news_1": {

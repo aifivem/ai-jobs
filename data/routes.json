@@ -5,93 +5,122 @@
     "kind": "random",
     "job": "",
     "depot": {
-      "x": 895.5,
-      "y": -179.2,
+      "x": 894.88,
+      "y": -179.22,
       "z": 74.7
     },
     "vehicle": "taxi",
     "spawn": {
-      "x": 911.1,
-      "y": -163.6,
-      "z": 74.4,
-      "heading": 195
+      "x": 899.0837,
+      "y": -180.4414,
+      "z": 73.4115,
+      "heading": 238.7553
     },
     "pay": 120,
     "seconds": 4,
     "item": "",
-    "stops": 8
+    "stops": 8,
+    "blip": {
+      "sprite": 198,
+      "color": 5,
+      "scale": 0.6
+    }
   },
   "bus": {
     "label": "Dashound Bus",
     "kind": "ordered",
     "job": "",
     "depot": {
-      "x": 453.6,
-      "y": -602.5,
-      "z": 28.6
+      "x": 462.22,
+      "y": -641.15,
+      "z": 28.45
     },
     "vehicle": "bus",
     "spawn": {
-      "x": 461.6,
-      "y": -616.2,
-      "z": 28.5,
-      "heading": 215
+      "x": 462.22,
+      "y": -641.15,
+      "z": 28.45,
+      "heading": 175
     },
     "pay": 60,
     "seconds": 6,
     "item": "",
-    "stops": 0
+    "stops": 0,
+    "blip": {
+      "sprite": 513,
+      "color": 49,
+      "scale": 0.6
+    }
   },
   "trucker": {
     "label": "Post OP Freight",
     "kind": "random",
     "job": "",
     "depot": {
-      "x": -424.1,
-      "y": -2789.6,
-      "z": 6
+      "x": 153.68,
+      "y": -3211.88,
+      "z": 5.91
     },
-    "vehicle": "mule",
+    "vehicle": "rumpo",
     "spawn": {
-      "x": -445.5,
-      "y": -2790.2,
-      "z": 5.9,
-      "heading": 45
+      "x": 141.12,
+      "y": -3204.31,
+      "z": 5.85,
+      "heading": 267.5
     },
     "pay": 250,
     "seconds": 8,
     "item": "",
-    "stops": 5
+    "stops": 5,
+    "blip": {
+      "sprite": 479,
+      "color": 5,
+      "scale": 0.6
+    }
   },
   "garbage": {
     "label": "Los Santos Sanitation",
     "kind": "random",
     "job": "",
     "depot": {
-      "x": -321.7,
-      "y": -1545.9,
-      "z": 31
+      "x": -321.45,
+      "y": -1545.86,
+      "z": 31.02
     },
-    "vehicle": "trash",
+    "vehicle": "trash2",
     "spawn": {
-      "x": -341.8,
-      "y": -1561.2,
-      "z": 25.2,
-      "heading": 60
+      "x": -333.84,
+      "y": -1527.28,
+      "z": 27.28,
+      "heading": 1.97
     },
     "pay": 90,
     "seconds": 6,
     "item": "",
-    "stops": 10
+    "stops": 10,
+    "blip": {
+      "sprite": 318,
+      "color": 39,
+      "scale": 1
+    },
+    "ped": {
+      "model": "s_m_y_garbage",
+      "coords": {
+        "x": -322.24,
+        "y": -1546.02,
+        "z": 31.02,
+        "heading": 294.97
+      }
+    }
   },
   "recycle": {
     "label": "Recycling Center",
     "kind": "gather",
     "job": "",
     "depot": {
-      "x": 55.6,
-      "y": 6472.1,
-      "z": 31.4
+      "x": 55.55,
+      "y": 6472.18,
+      "z": 31.43
     },
     "vehicle": "",
     "spawn": {
@@ -103,16 +132,21 @@
     "pay": 0,
     "seconds": 5,
     "item": "scrapmetal",
-    "stops": 0
+    "stops": 0,
+    "blip": {
+      "sprite": 365,
+      "color": 2,
+      "scale": 0.8
+    }
   },
   "vineyard": {
     "label": "Marlowe Vineyard",
     "kind": "gather",
     "job": "",
     "depot": {
-      "x": -1928.8,
-      "y": 2059.8,
-      "z": 140.8
+      "x": -1928.81,
+      "y": 2059.53,
+      "z": 140.84
     },
     "vehicle": "",
     "spawn": {
@@ -145,7 +179,16 @@
     "pay": 0,
     "seconds": 8,
     "item": "coral",
-    "stops": 7
+    "stops": 7,
+    "ped": {
+      "model": "a_m_m_salton_01",
+      "coords": {
+        "x": -1684.13,
+        "y": -1068.91,
+        "z": 13.15,
+        "heading": 100
+      }
+    }
   },
   "tow": {
     "label": "Hayes Towing",
@@ -166,7 +209,26 @@
     "pay": 250,
     "seconds": 8,
     "item": "",
-    "stops": 5
+    "stops": 5,
+    "towModels": [
+      "sultanrs",
+      "zion",
+      "oracle",
+      "chino",
+      "baller2",
+      "stanier",
+      "washington",
+      "buffalo",
+      "feltzer2",
+      "asea",
+      "fq2",
+      "jackal"
+    ],
+    "blip": {
+      "sprite": 477,
+      "color": 15,
+      "scale": 0.6
+    }
   },
   "news": {
     "label": "Weazel News",
@@ -179,14 +241,19 @@
     },
     "vehicle": "rumpo",
     "spawn": {
-      "x": -557,
-      "y": -925.25,
-      "z": 24,
-      "heading": 89
+      "x": -552.24,
+      "y": -925.61,
+      "z": 23.86,
+      "heading": 242.5
     },
     "pay": 180,
     "seconds": 15,
     "item": "",
-    "stops": 5
+    "stops": 5,
+    "blip": {
+      "sprite": 225,
+      "color": 1,
+      "scale": 0.6
+    }
   }
 }
