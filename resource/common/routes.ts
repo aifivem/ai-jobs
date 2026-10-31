@@ -26,7 +26,7 @@ export const EVENTS = {
   start: "ai-jobs:start",
   /** Callback: () -> { ok } stop working (the vehicle goes). */
   stop: "ai-jobs:stop",
-  /** Callback: (stopId) -> { ok } the player finished the current stop (after the progress). */
+  /** Callback: (stopId, underwater) -> { ok } the stop's work: the server runs the progress bar, then pays. */
   arrive: "ai-jobs:arrive",
   /** Server -> worker: (shift: Shift | null) the current stop (or the shift ended). */
   shift: "ai-jobs:client:shift",

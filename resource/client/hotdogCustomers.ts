@@ -1,11 +1,11 @@
 import {
+  attachProp,
   cache,
   callAction,
   every,
   notify,
   player,
   Points,
-  requestModel,
 } from "@aicore-fivem/lib/client";
 import { nearestOf, num } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
@@ -158,30 +158,12 @@ export class Customers {
 
   /** qb-hotdogjob's hand-over: the give animation with a hot dog in the hand. */
   private async hand(): Promise<void> {
-    const model = await requestModel("prop_cs_hotdog_01").catch(() => 0);
-    const ped = cache.ped;
-    let prop = 0;
-    if (model) {
-      prop = CreateObject(model, 0, 0, 0, false, false, false);
-      AttachEntityToEntity(
-        prop,
-        ped,
-        GetPedBoneIndex(ped, 57005),
-        0.12,
-        0,
-        -0.05,
-        220,
-        120,
-        0,
-        true,
-        true,
-        false,
-        true,
-        1,
-        true,
-      );
-      SetModelAsNoLongerNeeded(model);
-    }
+    const prop = await attachProp("prop_cs_hotdog_01", {
+      bone: 57005,
+      offset: { x: 0.12, y: 0, z: -0.05 },
+      rotation: { x: 220, y: 120, z: 0 },
+      rotationOrder: 1,
+    });
     await player.playAnim("mp_common", "givetake1_b", {
       duration: 1100,
       flag: 48,

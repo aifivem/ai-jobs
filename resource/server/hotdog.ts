@@ -8,10 +8,15 @@ import {
   online,
   resourceExport,
 } from "@aicore-fivem/lib/server";
-import { distance, fail, readFinite } from "@aicore-fivem/lib/shared";
+import {
+  distance,
+  fail,
+  randomInt,
+  readFinite,
+  rollChance,
+} from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
 import { HOTDOG_EVENTS, type Quality } from "common/hotdog";
-import { randomInt } from "./hotdogSales";
 import { hotdogSettings as settings, shifts } from "./hotdogShifts";
 import { stands } from "./hotdogStands";
 
@@ -135,7 +140,7 @@ onClientCallback(
       return { ok: true };
     }
     // From level 2 on, half the time a lucky batch of 1 to the level's number (qb-hotdogjob).
-    const made = index > 0 && Math.random() < 0.5 ? randomInt(1, index + 1) : 1;
+    const made = index > 0 && rollChance(50) ? randomInt(1, index + 1) : 1;
     shift.stock[quality] = Math.min(max, shift.stock[quality] + made);
     shifts.addRep(source, shift, settings.value.repGain[quality]);
     shifts.send(source, shift);

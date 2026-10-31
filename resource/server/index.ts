@@ -9,7 +9,9 @@ import {
   notify,
   onClientCallback,
   online,
+  onStop,
   PlayerMap,
+  progressFor,
   resourceExport,
   spawnVehicle,
 } from "@aicore-fivem/lib/server";
@@ -17,11 +19,14 @@ import {
   distance,
   fail,
   oneArg,
+  pickRandom,
+  randomInt,
   readText,
   RecordObjects,
   type Vec3,
 } from "@aicore-fivem/lib/shared";
-import { Locale, ResourceName } from "common";
+import type { ActionResult } from "@aicore-fivem/shared";
+import { Locale } from "common";
 import {
   EVENTS,
   readRoute,
@@ -94,9 +99,7 @@ interface Work {
 }
 
 async function spawnTowed(route: Route, stop: Stop): Promise<number> {
-  const model =
-    route.towModels[Math.floor(Math.random() * route.towModels.length)] ??
-    "asea";
+  const model = pickRandom(route.towModels) ?? "asea";
   const car = await spawnVehicle({
     model,
     type: "automobile",
@@ -112,12 +115,31 @@ function removeEntities(work: Work): void {
     if (entity && DoesEntityExist(entity)) DeleteEntity(entity);
 }
 
-/** Hands out a stop: the earliest finish counts the way there at `MAX_SPEED` plus 80% of the stop's time. */
+/** Hands out a stop: the stop's bar may start once the way there at `MAX_SPEED` has passed (teleports). */
 function assign(work: Work, stop: Stop, from: Vec3): void {
   work.stop = stop;
   work.since = GetGameTimer();
-  work.minMs =
-    (distance(from, stop) / MAX_SPEED) * 1000 + work.route.seconds * 800;
+  work.minMs = (distance(from, stop) / MAX_SPEED) * 1000;
+}
+
+/** The checks before and after a stop's bar: still this stop, close to it and (driving) to the work vehicle. */
+function stopRefusal(
+  source: number,
+  work: Work,
+  stopId: string,
+): ActionResult | null {
+  if (shifts.get(source) !== work || work.stop.id !== stopId)
+    return fail("JOBS_ERR_GONE");
+  const p = coordsOf(source);
+  if (distance(p, work.stop) > 12) return fail("JOBS_ERR_FAR");
+  if (
+    work.route.kind !== "gather" &&
+    work.vehicle &&
+    (!DoesEntityExist(work.vehicle) ||
+      distance(entityCoords(work.vehicle), p) > 15)
+  )
+    return fail("JOBS_ERR_VEHICLE_FAR");
+  return null;
 }
 
 const depotStop = (route: Route): Stop => ({
@@ -143,7 +165,7 @@ function nextStop(
   }
   const choices =
     list.length > 1 && work ? list.filter((s) => s.id !== work.stop.id) : list;
-  const stop = choices[Math.floor(Math.random() * choices.length)];
+  const stop = pickRandom(choices);
   return stop ? { stop, index: list.indexOf(stop) } : null;
 }
 
@@ -224,20 +246,33 @@ onClientCallback(EVENTS.stop, (source) => {
 
 onClientCallback(
   EVENTS.arrive,
-  { args: readTextId, lock: true },
-  async (source, stopId) => {
+  {
+    args: ([id, underwater]): [string, boolean] | null => {
+      const stopId = readText(id, 64);
+      return stopId === null ? null : [stopId, underwater === true];
+    },
+    lock: true,
+  },
+  async (source, stopId, underwater) => {
     const work = shifts.get(source);
-    if (!work || work.stop.id !== stopId) return fail("JOBS_ERR_GONE");
-    const p = coordsOf(source);
-    if (distance(p, work.stop) > 12) return fail("JOBS_ERR_FAR");
+    if (!work) return fail("JOBS_ERR_GONE");
+    const before = stopRefusal(source, work, stopId);
+    if (before) return before;
     if (GetGameTimer() - work.since < work.minMs) return fail("JOBS_ERR_FAST");
-    if (
-      work.route.kind !== "gather" &&
-      work.vehicle &&
-      (!DoesEntityExist(work.vehicle) ||
-        distance(entityCoords(work.vehicle), p) > 15)
-    )
-      return fail("JOBS_ERR_VEHICLE_FAR");
+    const gather = work.route.kind === "gather";
+    const done = await progressFor(source, {
+      label: Locale("JOBS_WORKING"),
+      duration: work.route.seconds * 1000,
+      anim:
+        gather && !underwater
+          ? { dict: "amb@prop_human_bum_bin@base", clip: "base" }
+          : undefined,
+      allowVehicle: !gather,
+    });
+    // A cancelled bar ends quietly; the stop stays.
+    if (!done) return { ok: true };
+    const after = stopRefusal(source, work, stopId);
+    if (after) return after;
     if (work.route.kind === "tow" && !work.loaded) {
       if (!work.towed || !DoesEntityExist(work.towed) || !work.vehicle)
         return fail("JOBS_ERR_GONE");
@@ -269,8 +304,7 @@ onClientCallback(
     }
     if (work.route.kind === "gather" && work.route.item) {
       const { gatherMin, gatherMax } = work.route;
-      const count =
-        gatherMin + Math.floor(Math.random() * (gatherMax - gatherMin + 1));
+      const count = randomInt(gatherMin, gatherMax);
       if (!inventory.addItem(source, work.route.item, count))
         return fail("JOBS_ERR_SPACE");
     } else if (work.route.pay > 0) {
@@ -314,7 +348,6 @@ onClientCallback(
   },
 );
 
-on("onResourceStop", (resource: string) => {
-  if (resource !== ResourceName) return;
+onStop(() => {
   for (const work of shifts.values()) removeEntities(work);
 });

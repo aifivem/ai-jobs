@@ -9,7 +9,14 @@ import {
   pedFromNet,
   resourceExport,
 } from "@aicore-fivem/lib/server";
-import { distance, fail, oneArg, readId } from "@aicore-fivem/lib/shared";
+import {
+  distance,
+  fail,
+  oneArg,
+  pickRandom,
+  randomInt,
+  readId,
+} from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
 import { HOTDOG_EVENTS, QUALITIES } from "common/hotdog";
 import { hotdogSettings as settings, shifts } from "./hotdogShifts";
@@ -29,9 +36,6 @@ const SALE_GAP_MS = 3000;
 
 const customers = new KeyedCooldowns();
 const sales = new Cooldowns();
-
-export const randomInt = (min: number, max: number): number =>
-  min + Math.floor(Math.random() * (max - min + 1));
 
 /** The NPC the client sent stands at the seller's stand and has not bought lately. */
 function customerAt(source: number, netId: number) {
@@ -58,7 +62,7 @@ onClientCallback(
     if (typeof at === "string") return fail(at);
     const { shift } = at;
     const have = QUALITIES.filter((q) => shift.stock[q] > 0);
-    const quality = have[Math.floor(Math.random() * have.length)];
+    const quality = pickRandom(have);
     if (!quality) return fail("HOTDOG_ERR_NO_DOGS");
     const range = shifts.levelOf(shift).level?.prices[quality];
     const count = randomInt(1, Math.min(3, shift.stock[quality]));

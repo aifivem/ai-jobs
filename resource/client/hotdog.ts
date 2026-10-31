@@ -7,10 +7,11 @@ import {
   notify,
   onMembershipChange,
   onServerEvent,
+  onStop,
   player,
   Points,
 } from "@aicore-fivem/lib/client";
-import { Locale, ResourceName } from "common";
+import { Locale } from "common";
 import { HOTDOG_EVENTS, toHotdogView, type HotdogView } from "common/hotdog";
 import { hotdog, world } from "./content";
 import { Customers } from "./hotdogCustomers";
@@ -202,6 +203,4 @@ onServerEvent(
   { args: ([on]) => [on === true] as const },
   (on) => void work.cook.set(on),
 );
-on("onResourceStop", (resource: string) => {
-  if (resource === ResourceName) work.stop();
-});
+onStop(() => work.stop());

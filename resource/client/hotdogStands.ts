@@ -1,5 +1,9 @@
-import { cache, onServerEvent, requestModel } from "@aicore-fivem/lib/client";
-import { ResourceName } from "common";
+import {
+  onServerEvent,
+  onStop,
+  playerPed,
+  requestModel,
+} from "@aicore-fivem/lib/client";
 import { HOTDOG_EVENTS, toStandView, type StandView } from "common/hotdog";
 import { hotdog } from "./content";
 
@@ -76,12 +80,7 @@ class Stands {
   private place({ view, object }: Drawn): void {
     if (!object) return;
     DetachEntity(object, true, false);
-    const ped =
-      view.pusher === 0
-        ? 0
-        : view.pusher === cache.serverId
-          ? cache.ped
-          : GetPlayerPed(GetPlayerFromServerId(view.pusher));
+    const ped = view.pusher === 0 ? 0 : playerPed(view.pusher);
     if (ped > 0 && DoesEntityExist(ped)) {
       const [x, y, z, rx, ry, rz] = PUSH_OFFSET;
       FreezeEntityPosition(object, false);
@@ -136,6 +135,4 @@ onServerEvent(
   },
   (reset, puts, removes) => stands.apply(reset, puts, removes),
 );
-on("onResourceStop", (resource: string) => {
-  if (resource === ResourceName) stands.clear();
-});
+onStop(() => stands.clear());

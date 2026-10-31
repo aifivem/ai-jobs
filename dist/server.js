@@ -71,10 +71,6 @@ function vec4(value, fallback) {
 function readFinite(value) {
 	return typeof value == "number" && Number.isFinite(value) ? value : null;
 }
-function readInt(value, min, max) {
-	return Number.isInteger(value) && value >= min && value <= max ? value : null;
-}
-const readId = (value) => readInt(value, 1, 2147483647);
 function readText(value, max) {
 	if (typeof value != "string") return null;
 	let text = value.trim();
@@ -86,7 +82,7 @@ const oneArg = (read) => ([value]) => {
 }, fail = (error) => ({
 	ok: !1,
 	error
-}), distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z), names = (v) => Array.isArray(v) ? v.filter((x) => typeof x == "string") : [];
+}), distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z), randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1)), pickRandom = (list) => list[Math.floor(Math.random() * list.length)], rollChance = (percent) => Math.random() * 100 < percent, names = (v) => Array.isArray(v) ? v.filter((x) => typeof x == "string") : [];
 function readAccess(value) {
 	let v = record(value), grades = {};
 	for (let [name, grade] of Object.entries(record(v.grades))) typeof grade == "number" && Number.isInteger(grade) && grade >= 0 && (grades[name] = grade);
@@ -453,6 +449,8 @@ const CORE = {
 	vehicleTypeCallback: "ai-core:vehicleType",
 	interactionStateKey: "ai:interaction",
 	pvpStateKey: "ai:pvp",
+	medicalStateKey: "ai:medical",
+	clientDeadEvent: "ai-core:client:dead",
 	charactersCallback: "ai-core:characters",
 	createCharacterCallback: "ai-core:createCharacter",
 	deleteCharacterCallback: "ai-core:deleteCharacter",
@@ -679,7 +677,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$20 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$19 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -693,7 +691,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$20.GetLookupValues(source);
+			list = core$19.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -958,7 +956,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$19 = resourceExport(CORE.resource);
+const core$18 = resourceExport(CORE.resource);
 var AdminPanel = class {
 	schema;
 	data = new Map();
@@ -977,7 +975,7 @@ var AdminPanel = class {
 		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelData", () => this.dataSnapshot()), registerExport("AdminPanelSummary", () => this.summary()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
 			count: 4,
 			windowMs: 1e4
-		} }), setImmediate(() => core$19.RegisterAdminPanel(this.resource));
+		} }), setImmediate(() => core$18.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -1091,7 +1089,7 @@ var AdminPanel = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$19.AdminPanelChanged({
+		if (core$18.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -1138,19 +1136,19 @@ function notify(source, text, kind = "info", duration) {
 	emitNet(LIB_UI.notifyEvent, source, notification);
 }
 // ../../../packages/lib/src/server/inventory.ts
-const core$18 = resourceExport(CORE.resource), inventory = {
-	addItem: (inv, item, count = 1, metadata, slot) => core$18.AddItem(inv, item, count, metadata, slot),
-	removeItem: (inv, item, count = 1, metadata, slot) => core$18.RemoveItem(inv, item, count, metadata, slot),
-	getItemCount: (inv, item, metadata) => core$18.GetItemCount(inv, item, metadata),
-	hasItem: (inv, item, count = 1) => core$18.HasItem(inv, item, count),
-	canCarryItem: (inv, item, count = 1, metadata) => core$18.CanCarryItem(inv, item, count, metadata),
-	getItems: (inv) => core$18.GetItems(inv),
-	clearInventory: (inv) => core$18.ClearInventory(inv),
-	registerStash: (name, label, slots, maxWeight, jobs = []) => core$18.RegisterStash(name, label, slots, maxWeight, jobs),
-	openInventory: (source, inv) => core$18.OpenInventory(source, inv),
-	registerUsableItem: (name, handler) => core$18.RegisterUsableItem(name, handler),
-	getItemDefinition: (name) => core$18.GetItemDefinition(name)
-}, core$17 = resourceExport(CORE.resource);
+const core$17 = resourceExport(CORE.resource), inventory = {
+	addItem: (inv, item, count = 1, metadata, slot) => core$17.AddItem(inv, item, count, metadata, slot),
+	removeItem: (inv, item, count = 1, metadata, slot) => core$17.RemoveItem(inv, item, count, metadata, slot),
+	getItemCount: (inv, item, metadata) => core$17.GetItemCount(inv, item, metadata),
+	hasItem: (inv, item, count = 1) => core$17.HasItem(inv, item, count),
+	canCarryItem: (inv, item, count = 1, metadata) => core$17.CanCarryItem(inv, item, count, metadata),
+	getItems: (inv) => core$17.GetItems(inv),
+	clearInventory: (inv) => core$17.ClearInventory(inv),
+	registerStash: (name, label, slots, maxWeight, jobs = []) => core$17.RegisterStash(name, label, slots, maxWeight, jobs),
+	openInventory: (source, inv) => core$17.OpenInventory(source, inv),
+	registerUsableItem: (name, handler) => core$17.RegisterUsableItem(name, handler),
+	getItemDefinition: (name) => core$17.GetItemDefinition(name)
+}, core$16 = resourceExport(CORE.resource);
 function reindex(index, source, before, after) {
 	for (let name of before) {
 		let set = index.get(name);
@@ -1178,11 +1176,11 @@ var OnlinePlayers = class {
 				gangs: [],
 				gangNames: [],
 				duty: null
-			}), this.setJobs(source, core$17.GetJobs(source) ?? []), this.setGangs(source, core$17.GetGangs(source) ?? []), this.setDuty(source, core$17.GetDutyJob(source));
+			}), this.setJobs(source, core$16.GetJobs(source) ?? []), this.setGangs(source, core$16.GetGangs(source) ?? []), this.setDuty(source, core$16.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => this.setJobs(source, jobs)), on(CORE.gangsChangedEvent, (source, gangs) => this.setGangs(source, gangs)), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$17.GetLoadedSources()) {
-			let character = core$17.GetCharacter(source);
+		for (let source of core$16.GetLoadedSources()) {
+			let character = core$16.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -1221,6 +1219,9 @@ var OnlinePlayers = class {
 	}
 	character(source) {
 		return this.start(), this.players.get(source)?.character ?? null;
+	}
+	charId(source) {
+		return this.start(), this.players.get(source)?.character.id;
 	}
 	name(source, options = {}) {
 		let c = this.character(source);
@@ -1275,10 +1276,10 @@ var OnlinePlayers = class {
 		return this.start(), this.onDuty.get(job) ?? EMPTY;
 	}
 };
-const EMPTY = new Set(), online = new OnlinePlayers(), core$16 = resourceExport(CORE.resource), vehicleKeys = {
-	give: (source, vehicle, purpose = "temporary") => core$16.GiveVehicleKeys(source, vehicle, purpose),
-	remove: (source, vehicle) => core$16.RemoveVehicleKeys(source, vehicle),
-	has: (source, vehicle) => core$16.HasVehicleKeys(source, vehicle)
+const EMPTY = new Set(), online = new OnlinePlayers(), core$15 = resourceExport(CORE.resource), vehicleKeys = {
+	give: (source, vehicle, purpose = "temporary") => core$15.GiveVehicleKeys(source, vehicle, purpose),
+	remove: (source, vehicle) => core$15.RemoveVehicleKeys(source, vehicle),
+	has: (source, vehicle) => core$15.HasVehicleKeys(source, vehicle)
 }, TYPES = new Set([
 	"automobile",
 	"bike",
@@ -1336,18 +1337,12 @@ async function spawnVehicle(options) {
 	}], ...options.seats ?? []];
 	return await Promise.all(riders.map((r) => seatPlayer(vehicle, r.source, r.seat))), vehicle;
 }
-function entityFromNet(netId, type) {
-	if (readId(netId) === null) return 0;
-	let entity = NetworkGetEntityFromNetworkId(netId);
-	return !entity || !DoesEntityExist(entity) ? 0 : type === void 0 || GetEntityType(entity) === type ? entity : 0;
-}
-const pedFromNet = (netId) => entityFromNet(netId, 1);
 resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/players.ts
 const log$4 = createLogger(GetCurrentResourceName()), dropped = new Set();
-let listening = !1;
+let listening$1 = !1;
 function onDropped(fn) {
-	listening || (listening = !0, on("playerDropped", () => {
+	listening$1 || (listening$1 = !0, on("playerDropped", () => {
 		let source = Number(globalThis.source);
 		for (let handler of dropped) handler(source);
 	})), dropped.add(fn);
@@ -1360,52 +1355,6 @@ var PlayerMap = class extends Map {
 			this.delete(source), options.onDrop?.(source, value);
 		});
 	}
-}, Cooldowns = class {
-	until = new PlayerMap();
-	ready(source) {
-		return this.left(source) === 0;
-	}
-	start(source, ms) {
-		this.until.set(source, GetGameTimer() + ms);
-	}
-	take(source, ms) {
-		return this.ready(source) ? (this.start(source, ms), !0) : !1;
-	}
-	left(source) {
-		let until = this.until.get(source);
-		if (until === void 0) return 0;
-		let left = until - GetGameTimer();
-		return left > 0 ? left : (this.until.delete(source), 0);
-	}
-	clear(source) {
-		this.until.delete(source);
-	}
-}, KeyedCooldowns = class {
-	until = new Map();
-	sweepAt = 64;
-	ready(key) {
-		return this.left(key) === 0;
-	}
-	start(key, ms) {
-		ms <= 0 ? this.until.delete(key) : (this.until.size >= this.sweepAt && this.sweep(), this.until.set(key, GetGameTimer() + ms));
-	}
-	take(key, ms) {
-		return this.ready(key) ? (this.start(key, ms), !0) : !1;
-	}
-	left(key) {
-		let until = this.until.get(key);
-		if (until === void 0) return 0;
-		let left = until - GetGameTimer();
-		return left > 0 ? left : (this.until.delete(key), 0);
-	}
-	clear(key) {
-		this.until.delete(key);
-	}
-	sweep() {
-		let now = GetGameTimer();
-		for (let [key, until] of this.until) until <= now && this.until.delete(key);
-		this.sweepAt = Math.max(64, this.until.size * 2);
-	}
 };
 function onCharacter(handlers) {
 	let live = new Map(), deliver = (source, character) => {
@@ -1415,19 +1364,19 @@ function onCharacter(handlers) {
 		} catch (error) {
 			log$4.error(`character loaded handler failed for ${source}`, error);
 		}
-	}, end = (source, charId) => {
+	}, end = (source, charId, reason) => {
 		if (live.delete(source)) try {
-			handlers.unloaded?.(source, charId);
+			handlers.unloaded?.(source, charId, reason);
 		} catch (error) {
 			log$4.error(`character unloaded handler failed for ${source}`, error);
 		}
 	};
 	on(CORE.playerLoadedEvent, (source, character) => {
 		let previous = live.get(source);
-		previous !== void 0 && end(source, previous), deliver(source, character);
-	}), on(CORE.playerUnloadedEvent, (source, charId) => end(source, charId)), onDropped((source) => setImmediate(() => {
+		previous !== void 0 && end(source, previous, "switch"), deliver(source, character);
+	}), on(CORE.playerUnloadedEvent, (source, charId, reason) => end(source, charId, reason === "dropped" ? "dropped" : "switch")), onDropped((source) => setImmediate(() => {
 		let charId = live.get(source);
-		charId !== void 0 && end(source, charId);
+		charId !== void 0 && end(source, charId, "dropped");
 	})), setImmediate(() => {
 		for (let source of online.sources()) {
 			if (live.has(source)) continue;
@@ -1632,8 +1581,19 @@ on(CORE.playerUnloadedEvent, (source) => {
 	let settle = running.get(source);
 	settle && settle(!1);
 });
+function progressFor(source, options) {
+	let previous = running.get(source);
+	previous && (previous(!1), emitNet(LIB_UI.progressForCancelEvent, source));
+	let { minRatio = .8, ...bar } = options, startedAt = GetGameTimer();
+	return new Promise((resolve) => {
+		let done = !1, settle = (ok) => {
+			done || (done = !0, running.get(source) === settle && running.delete(source), resolve(ok));
+		};
+		running.set(source, settle), triggerClientCallback(LIB_UI.progressForCallback, source, [bar], bar.duration + 15e3).then((answer) => settle(answer === !0 && GetGameTimer() - startedAt >= bar.duration * minRatio), () => settle(!1));
+	});
+}
 // ../../../packages/lib/src/server/definitions.ts
-const core$14 = resourceExport("ai-core");
+const core$13 = resourceExport("ai-core");
 new class {
 	jobs = new Map();
 	gangs = new Map();
@@ -1644,11 +1604,11 @@ new class {
 	}
 	job(name) {
 		let def = this.jobs.get(name);
-		return def === void 0 && this.jobs.set(name, def = core$14.GetJobDefinition(name) ?? null), def;
+		return def === void 0 && this.jobs.set(name, def = core$13.GetJobDefinition(name) ?? null), def;
 	}
 	gang(name) {
 		let def = this.gangs.get(name);
-		return def === void 0 && this.gangs.set(name, def = core$14.GetGangDefinition(name) ?? null), def;
+		return def === void 0 && this.gangs.set(name, def = core$13.GetGangDefinition(name) ?? null), def;
 	}
 }();
 async function minigameFor(source, options) {
@@ -1691,17 +1651,24 @@ createLogger(resource), new class {
 			if (name === resource) for (let command of this.list) for (let n of command.info.names) emitNet("chat:removeSuggestion", -1, `/${n}`);
 		});
 	}
-}();
-// ../../../packages/lib/src/server/netEvent.ts
-const log$2 = createLogger(GetCurrentResourceName());
-function onClientEvent(name, first, second) {
-	let [handler, options] = typeof first == "function" ? [first, second ?? {}] : [second, first], gate = new ClientGate(name, options, 10);
-	onNet(name, (...raw) => {
-		let source = Number(globalThis.source), args = gate.check(source, raw);
-		args && gate.run(source, void 0, () => handler(source, ...args)).catch((error) => log$2.error(`event ${name} failed for ${source}`, error));
+}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib");
+// ../../../packages/lib/src/fivem/byResource.ts
+const stopHandlers = [];
+let listening = !1;
+function onAnyStop(handler) {
+	if (stopHandlers.push(handler), listening) return;
+	listening = !0;
+	let event = IsDuplicityVersion() ? "onResourceStop" : "onClientResourceStop";
+	on(event, (resource) => {
+		for (let stop of stopHandlers) stop(resource);
 	});
 }
-createLogger("aicore-lib");
+function onStop(fn) {
+	let self = GetCurrentResourceName();
+	onAnyStop((resource) => {
+		resource === self && fn();
+	});
+}
 let log = null;
 var ScheduledJob = class {
 	interval;
@@ -1838,8 +1805,8 @@ function isOnline(source) {
 	return !!GetPlayerName(String(source));
 }
 // resource/common/locale.ts
-const Locale = createLocale(), ResourceName = GetCurrentResourceName();
-IsDuplicityVersion();
+const Locale = createLocale();
+GetCurrentResourceName(), IsDuplicityVersion();
 // resource/common/routes.ts
 const EVENTS = {
 	start: "ai-jobs:start",
@@ -2547,11 +2514,7 @@ const price = {
 	stands: "ai-jobs:client:hotdogStands",
 	shift: "ai-jobs:client:hotdogShift",
 	cooking: "ai-jobs:client:hotdogCooking"
-}, QUALITIES = [
-	"exotic",
-	"rare",
-	"common"
-], QB_LEVELS = [
+}, QB_LEVELS = [
 	[
 		0,
 		15,
@@ -2726,7 +2689,7 @@ every(2e3, () => stands.follow(), { name: "hotdogFollow" }), onCharacter({
 	unloaded: (source) => stands.stop(source)
 });
 // resource/server/hotdogShifts.ts
-const core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", readHotdog), shifts$1 = new class {
+const core$2 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", readHotdog), shifts$1 = new class {
 	map = new PlayerMap({ onDrop: (_source, shift) => stands.remove(shift.stand) });
 	get(source) {
 		return this.map.get(source);
@@ -2736,7 +2699,7 @@ const core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", 
 			stand: stands.add(source, s.spawn, s.spawn.heading).id,
 			deposit,
 			account,
-			rep: int(record(core$3.GetMeta(source, "rep")).hotdog, 0, 0, 1e6),
+			rep: int(record(core$2.GetMeta(source, "rep")).hotdog, 0, 0, 1e6),
 			stock: {
 				exotic: 0,
 				rare: 0,
@@ -2748,7 +2711,7 @@ const core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", 
 	}
 	end(source, refund) {
 		let shift = this.map.get(source);
-		shift && (this.map.delete(source), stands.remove(shift.stand), refund && shift.deposit > 0 && core$3.AddMoney(source, shift.account, shift.deposit, "hotdog:deposit"), isOnline(source) && this.send(source, null));
+		shift && (this.map.delete(source), stands.remove(shift.stand), refund && shift.deposit > 0 && core$2.AddMoney(source, shift.account, shift.deposit, "hotdog:deposit"), isOnline(source) && this.send(source, null));
 	}
 	endAll() {
 		for (let source of this.map.keys()) this.end(source, !0);
@@ -2762,8 +2725,8 @@ const core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", 
 	}
 	addRep(source, shift, gain) {
 		let rep = Math.min(hotdogSettings.value.maxRep, shift.rep + gain);
-		rep !== shift.rep && (shift.rep = rep, core$3.SetMeta(source, "rep", {
-			...record(core$3.GetMeta(source, "rep")),
+		rep !== shift.rep && (shift.rep = rep, core$2.SetMeta(source, "rep", {
+			...record(core$2.GetMeta(source, "rep")),
 			hotdog: rep
 		}));
 	}
@@ -2789,58 +2752,7 @@ const core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", 
 		} : "HOTDOG_ERR_FAR";
 	}
 }();
-onCharacter({ unloaded: (source) => shifts$1.end(source, !1) }), on("onResourceStop", (resource) => {
-	resource === ResourceName && shifts$1.endAll();
-});
-// resource/server/hotdogSales.ts
-const core$2 = resourceExport("ai-core"), CUSTOMER_COOLDOWN_MS = 6e5, customers = new KeyedCooldowns(), sales = new Cooldowns(), randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
-function customerAt(source, netId) {
-	let at = shifts$1.atStand(source, 5);
-	if (typeof at == "string") return at;
-	let ped = pedFromNet(netId);
-	return !ped || IsPedAPlayer(ped) || distance(entityCoords(ped), at.stand) > 6 || !customers.ready(netId) ? "HOTDOG_ERR_CUSTOMER" : at;
-}
-onClientCallback(HOTDOG_EVENTS.offer, { args: oneArg(readId) }, (source, netId) => {
-	if (!sales.ready(source)) return fail("HOTDOG_ERR_CUSTOMER");
-	let at = customerAt(source, netId);
-	if (typeof at == "string") return fail(at);
-	let { shift } = at, have = QUALITIES.filter((q) => shift.stock[q] > 0), quality = have[Math.floor(Math.random() * have.length)];
-	if (!quality) return fail("HOTDOG_ERR_NO_DOGS");
-	let range = shifts$1.levelOf(shift).level?.prices[quality], count = randomInt(1, Math.min(3, shift.stock[quality])), price = range ? randomInt(range.min, range.max) : 1;
-	return shift.offer = {
-		netId,
-		quality,
-		count,
-		price,
-		until: GetGameTimer() + 6e4
-	}, {
-		ok: !0,
-		count,
-		price: count * price
-	};
-}), onClientCallback(HOTDOG_EVENTS.sell, {
-	args: oneArg(readId),
-	lock: !0
-}, (source, netId) => {
-	let at = customerAt(source, netId);
-	if (typeof at == "string") return fail(at);
-	let { shift } = at, offer = shift.offer;
-	if (shift.offer = null, !offer || offer.netId !== netId || GetGameTimer() > offer.until) return fail("HOTDOG_ERR_CUSTOMER");
-	if (shift.stock[offer.quality] < offer.count) return fail("HOTDOG_ERR_NO_DOGS");
-	shift.stock[offer.quality] -= offer.count, customers.start(netId, CUSTOMER_COOLDOWN_MS), sales.start(source, 3e3);
-	let total = offer.count * offer.price;
-	return core$2.AddMoney(source, hotdogSettings.value.payAccount, total, "hotdog:sale"), shifts$1.send(source, shift), notify(source, Locale("HOTDOG_SOLD", offer.count, total), "success"), aiLog("hotdog", `sold ${offer.count} hot dogs for $${total}`, {
-		source,
-		metadata: {
-			quality: offer.quality,
-			count: offer.count,
-			total
-		}
-	}), { ok: !0 };
-}), onClientEvent(HOTDOG_EVENTS.decline, (source) => {
-	let shift = shifts$1.get(source);
-	shift?.offer && (customers.start(shift.offer.netId, CUSTOMER_COOLDOWN_MS), shift.offer = null);
-});
+onCharacter({ unloaded: (source) => shifts$1.end(source, !1) }), onStop(() => shifts$1.endAll());
 // resource/server/hotdog.ts
 const core$1 = resourceExport("ai-core"), QUALITY_TEXT = {
 	exotic: "HOTDOG_Q_EXOTIC",
@@ -2907,7 +2819,7 @@ onClientCallback(HOTDOG_EVENTS.prepare, async (source) => {
 	if (!isOnline(source) || (emitNet(HOTDOG_EVENTS.cooking, source, !1), shifts$1.get(source) !== shift)) return { ok: !0 };
 	let quality = misses === 0 ? "exotic" : misses === 1 ? "rare" : "common", label = Locale(QUALITY_TEXT[quality]), { index, level } = shifts$1.levelOf(shift), max = level?.stock ?? 0;
 	if (shift.stock[quality] + 1 > max) return notify(source, Locale("HOTDOG_NO_MORE", label), "error"), { ok: !0 };
-	let made = index > 0 && Math.random() < .5 ? randomInt(1, index + 1) : 1;
+	let made = index > 0 && rollChance(50) ? randomInt(1, index + 1) : 1;
 	return shift.stock[quality] = Math.min(max, shift.stock[quality] + made), shifts$1.addRep(source, shift, hotdogSettings.value.repGain[quality]), shifts$1.send(source, shift), notify(source, made > 1 ? Locale("HOTDOG_MADE_LUCKY", made, label) : Locale("HOTDOG_MADE", label), "success"), { ok: !0 };
 }, { lock: !0 });
 // resource/server/index.ts
@@ -2932,7 +2844,7 @@ new RecordObjects(panel, "stops", readStop, (_id, stop) => stops.add(stop)), aiL
 const readTextId = oneArg((v) => readText(v, 64));
 async function spawnTowed(route, stop) {
 	return await spawnVehicle({
-		model: route.towModels[Math.floor(Math.random() * route.towModels.length)] ?? "asea",
+		model: pickRandom(route.towModels) ?? "asea",
 		type: "automobile",
 		coords: {
 			x: stop.x,
@@ -2947,7 +2859,12 @@ function removeEntities(work) {
 	for (let entity of [work.vehicle, work.towed]) entity && DoesEntityExist(entity) && DeleteEntity(entity);
 }
 function assign(work, stop, from) {
-	work.stop = stop, work.since = GetGameTimer(), work.minMs = distance(from, stop) / 60 * 1e3 + work.route.seconds * 800;
+	work.stop = stop, work.since = GetGameTimer(), work.minMs = distance(from, stop) / 60 * 1e3;
+}
+function stopRefusal(source, work, stopId) {
+	if (shifts.get(source) !== work || work.stop.id !== stopId) return fail("JOBS_ERR_GONE");
+	let p = coordsOf(source);
+	return distance(p, work.stop) > 12 ? fail("JOBS_ERR_FAR") : work.route.kind !== "gather" && work.vehicle && (!DoesEntityExist(work.vehicle) || distance(entityCoords(work.vehicle), p) > 15) ? fail("JOBS_ERR_VEHICLE_FAR") : null;
 }
 const depotStop = (route) => ({
 	id: "depot",
@@ -2965,7 +2882,7 @@ function nextStop(route, work) {
 			index
 		} : null;
 	}
-	let choices = list.length > 1 && work ? list.filter((s) => s.id !== work.stop.id) : list, stop = choices[Math.floor(Math.random() * choices.length)];
+	let choices = list.length > 1 && work ? list.filter((s) => s.id !== work.stop.id) : list, stop = pickRandom(choices);
 	return stop ? {
 		stop,
 		index: list.indexOf(stop)
@@ -3018,15 +2935,29 @@ onClientCallback(EVENTS.start, {
 	};
 	return isOnline(source) ? (assign(work, first.stop, route.depot), shifts.set(source, work), send(source, work), { ok: !0 }) : (removeEntities(work), fail("JOBS_ERR_GONE"));
 }), onClientCallback(EVENTS.stop, (source) => (end(source), { ok: !0 })), onClientCallback(EVENTS.arrive, {
-	args: readTextId,
+	args: ([id, underwater]) => {
+		let stopId = readText(id, 64);
+		return stopId === null ? null : [stopId, underwater === !0];
+	},
 	lock: !0
-}, async (source, stopId) => {
+}, async (source, stopId, underwater) => {
 	let work = shifts.get(source);
-	if (!work || work.stop.id !== stopId) return fail("JOBS_ERR_GONE");
-	let p = coordsOf(source);
-	if (distance(p, work.stop) > 12) return fail("JOBS_ERR_FAR");
+	if (!work) return fail("JOBS_ERR_GONE");
+	let before = stopRefusal(source, work, stopId);
+	if (before) return before;
 	if (GetGameTimer() - work.since < work.minMs) return fail("JOBS_ERR_FAST");
-	if (work.route.kind !== "gather" && work.vehicle && (!DoesEntityExist(work.vehicle) || distance(entityCoords(work.vehicle), p) > 15)) return fail("JOBS_ERR_VEHICLE_FAR");
+	let gather = work.route.kind === "gather";
+	if (!await progressFor(source, {
+		label: Locale("JOBS_WORKING"),
+		duration: work.route.seconds * 1e3,
+		anim: gather && !underwater ? {
+			dict: "amb@prop_human_bum_bin@base",
+			clip: "base"
+		} : void 0,
+		allowVehicle: !gather
+	})) return { ok: !0 };
+	let after = stopRefusal(source, work, stopId);
+	if (after) return after;
 	if (work.route.kind === "tow" && !work.loaded) {
 		if (!work.towed || !DoesEntityExist(work.towed) || !work.vehicle) return fail("JOBS_ERR_GONE");
 		let owner = NetworkGetEntityOwner(work.towed);
@@ -3037,7 +2968,7 @@ onClientCallback(EVENTS.start, {
 		DeleteEntity(work.towed), work.towed = 0, work.loaded = !1;
 	}
 	if (work.route.kind === "gather" && work.route.item) {
-		let { gatherMin, gatherMax } = work.route, count = gatherMin + Math.floor(Math.random() * (gatherMax - gatherMin + 1));
+		let { gatherMin, gatherMax } = work.route, count = randomInt(gatherMin, gatherMax);
 		if (!inventory.addItem(source, work.route.item, count)) return fail("JOBS_ERR_SPACE");
 	} else work.route.pay > 0 && (core.AddMoney(source, work.route.account, work.route.pay, `work:${work.route.id}`), notify(source, Locale("JOBS_PAID", work.route.pay), "success", 2500));
 	if (work.done++, aiLog("work", `stop ${stopId}`, {
@@ -3053,6 +2984,6 @@ onClientCallback(EVENTS.start, {
 		work.towed = towed;
 	}
 	return assign(work, next.stop, from), send(source, work), { ok: !0 };
-}), on("onResourceStop", (resource) => {
-	if (resource === ResourceName) for (let work of shifts.values()) removeEntities(work);
+}), onStop(() => {
+	for (let work of shifts.values()) removeEntities(work);
 });

@@ -2,11 +2,11 @@ import {
   isNear,
   isOnline,
   onCharacter,
+  onStop,
   PlayerMap,
   resourceExport,
 } from "@aicore-fivem/lib/server";
 import { int, record } from "@aicore-fivem/lib/shared";
-import { ResourceName } from "common";
 import {
   HOTDOG_EVENTS,
   levelOf,
@@ -134,6 +134,4 @@ export const shifts = new HotdogShifts();
 // A character switch ends the shift without the deposit (QB: the stand is gone).
 onCharacter({ unloaded: (source) => shifts.end(source, false) });
 // A restart gives every deposit back: the stands go with the resource.
-on("onResourceStop", (resource: string) => {
-  if (resource === ResourceName) shifts.endAll();
-});
+onStop(() => shifts.endAll());

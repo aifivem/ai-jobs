@@ -1,10 +1,10 @@
 import {
+  attachProp,
   cache,
   controls,
   every,
   keyHints,
   player,
-  requestModel,
 } from "@aicore-fivem/lib/client";
 import { Locale } from "common";
 
@@ -78,27 +78,11 @@ export class Cook {
     this.spatula = 0;
     if (!on) return player.stopAnim();
     await player.playAnim(COOK_ANIM.dict, COOK_ANIM.clip, { flag: 49 });
-    const model = await requestModel("prop_fish_slice_01").catch(() => 0);
-    if (!model) return;
-    const ped = cache.ped;
-    this.spatula = CreateObject(model, 0, 0, 0, false, false, false);
-    AttachEntityToEntity(
-      this.spatula,
-      ped,
-      GetPedBoneIndex(ped, 57005),
-      0.08,
-      0,
-      -0.02,
-      0,
-      -25,
-      130,
-      true,
-      true,
-      false,
-      true,
-      1,
-      true,
-    );
-    SetModelAsNoLongerNeeded(model);
+    this.spatula = await attachProp("prop_fish_slice_01", {
+      bone: 57005,
+      offset: { x: 0.08, y: 0, z: -0.02 },
+      rotation: { x: 0, y: -25, z: 130 },
+      rotationOrder: 1,
+    });
   }
 }

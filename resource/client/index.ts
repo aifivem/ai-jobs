@@ -3,11 +3,11 @@ import {
   cache,
   callAction,
   createBlip,
+  entityFromNetId,
   notify,
   onMembershipChange,
   onServerEvent,
   Points,
-  progress,
 } from "@aicore-fivem/lib/client";
 import { isPublic, readId, RecordObjects } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
@@ -83,9 +83,8 @@ class Work {
       color: 5,
       scale: 1,
       shortRange: false,
+      route: 5,
     });
-    SetBlipRoute(this.stopBlip, true);
-    SetBlipRouteColour(this.stopBlip, 5);
     this.stopPoint.add("stop", {
       coords: s,
       label: Locale("JOBS_PROMPT_DO", s.label),
@@ -96,27 +95,22 @@ class Work {
     });
   }
 
+  /** The server runs the stop's progress bar and pays when it ran out. */
   async doStop(): Promise<void> {
     const shift = this.shift;
     if (!shift) return;
     const route = this.routes.records.get(shift.route);
-    const seconds = route?.seconds ?? 5;
     const gather = route?.kind === "gather";
     if (!gather && cache.vehicle !== false && GetEntitySpeed(cache.vehicle) > 2)
       return notify(Locale("JOBS_STOP_VEHICLE"), "warning", 2500);
-    const ok = await progress({
-      label: Locale("JOBS_WORKING"),
-      duration: seconds * 1000,
-      anim:
-        gather && !IsPedSwimmingUnderWater(cache.ped)
-          ? { dict: "amb@prop_human_bum_bin@base", clip: "base" }
-          : undefined,
-      allowVehicle: !gather,
-    });
-    if (!ok) return;
-    await callAction(EVENTS.arrive, [shift.stop.id], {
-      fallback: "JOBS_ERR_FAR",
-    });
+    await callAction(
+      EVENTS.arrive,
+      [shift.stop.id, IsPedSwimmingUnderWater(cache.ped)],
+      {
+        fallback: "JOBS_ERR_FAR",
+        timeout: (route?.seconds ?? 5) * 1000 + 30_000,
+      },
+    );
   }
 
   async toggle(routeId: string): Promise<void> {
@@ -144,14 +138,11 @@ onServerEvent(
     },
   },
   (car, flatbed) => {
-    if (
-      !NetworkDoesEntityExistWithNetworkId(car) ||
-      !NetworkDoesEntityExistWithNetworkId(flatbed)
-    )
-      return;
-    const bed = NetToVeh(flatbed);
+    const towed = entityFromNetId(car, 2);
+    const bed = entityFromNetId(flatbed, 2);
+    if (!towed || !bed) return;
     AttachEntityToEntity(
-      NetToVeh(car),
+      towed,
       bed,
       GetEntityBoneIndexByName(bed, "bodyshell"),
       0.0,
