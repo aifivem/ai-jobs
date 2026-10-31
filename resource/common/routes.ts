@@ -1,9 +1,11 @@
 import {
+  type AccessRule,
   int,
   num,
   type PlacePed,
   readBlipStyle,
   readId,
+  readAccess,
   readPlacePed,
   record,
   str,
@@ -38,8 +40,8 @@ export interface Route {
   id: string;
   label: string;
   kind: RouteKind;
-  /** Empty: anyone; otherwise this ai-core job. */
-  job: string;
+  /** Who may work the route (lib access fields; empty: anyone). */
+  access: AccessRule;
   depot: { x: number; y: number; z: number };
   /** Empty for gather routes. */
   vehicle: string;
@@ -101,63 +103,60 @@ export interface Shift {
 
 const KINDS: RouteKind[] = ["ordered", "random", "gather", "tow"];
 
-export function readRoutes(raw: unknown): Map<string, Route> {
-  const out = new Map<string, Route>();
-  for (const [id, value] of Object.entries(record(raw))) {
-    const v = record(value);
-    const d = record(v.depot);
-    const kind = KINDS.includes(v.kind as RouteKind)
-      ? (v.kind as RouteKind)
-      : "random";
-    const gatherMin = int(v.gatherMin, 1, 1, 100);
-    const towModels = Array.isArray(v.towModels)
-      ? v.towModels.filter((m): m is string => typeof m === "string")
-      : [];
-    const blip = record(v.blip);
-    out.set(id, {
-      ped: readPlacePed(v.ped),
-      id,
-      label: str(v.label, id, 48),
-      kind,
-      job: str(v.job, "", 32),
-      depot: { x: num(d.x, 0), y: num(d.y, 0), z: num(d.z, 0) },
-      vehicle: str(v.vehicle, "", 32),
-      spawn: vec4(v.spawn, {
-        x: num(d.x, 0),
-        y: num(d.y, 0),
-        z: num(d.z, 0),
-        heading: 0,
-      }),
-      pay: int(v.pay, 0, 0, 100_000),
-      account: str(v.account, "bank", 32) || "bank",
-      seconds: int(v.seconds, 5, 0, 120),
-      item: str(v.item, "", 48),
-      stops: int(v.stops, 0, 0, 100),
-      gatherMin,
-      gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
-      towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
-      blip: readBlipStyle(blip, { sprite: KIND_SPRITE[kind], color: 5, scale: 0.65 }),
-    });
-  }
-  return out;
+/** One route record (`panel.records` / `world.records`). */
+export function readRoute(id: string, v: Record<string, unknown>): Route {
+  const d = record(v.depot);
+  const kind = KINDS.includes(v.kind as RouteKind)
+    ? (v.kind as RouteKind)
+    : "random";
+  const gatherMin = int(v.gatherMin, 1, 1, 100);
+  const towModels = Array.isArray(v.towModels)
+    ? v.towModels.filter((m): m is string => typeof m === "string")
+    : [];
+  const blip = record(v.blip);
+  return {
+    ped: readPlacePed(v.ped),
+    id,
+    label: str(v.label, id, 48),
+    kind,
+    access: readAccess(v),
+    depot: { x: num(d.x, 0), y: num(d.y, 0), z: num(d.z, 0) },
+    vehicle: str(v.vehicle, "", 32),
+    spawn: vec4(v.spawn, {
+      x: num(d.x, 0),
+      y: num(d.y, 0),
+      z: num(d.z, 0),
+      heading: 0,
+    }),
+    pay: int(v.pay, 0, 0, 100_000),
+    account: str(v.account, "bank", 32) || "bank",
+    seconds: int(v.seconds, 5, 0, 120),
+    item: str(v.item, "", 48),
+    stops: int(v.stops, 0, 0, 100),
+    gatherMin,
+    gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
+    towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
+    blip: readBlipStyle(blip, {
+      sprite: KIND_SPRITE[kind],
+      color: 5,
+      scale: 0.65,
+    }),
+  };
 }
 
-export function readStops(raw: unknown): Stop[] {
-  return Object.entries(record(raw))
-    .map(([id, value]) => {
-      const v = record(value);
-      const c = record(v.coords);
-      return {
-        id,
-        route: str(v.route, "", 32),
-        label: str(v.label, id, 48),
-        x: num(c.x, 0),
-        y: num(c.y, 0),
-        z: num(c.z, 0),
-      };
-    })
-    .filter((s) => s.route !== "")
-    .sort((a, b) => a.id.localeCompare(b.id, "en", { numeric: true }));
+/** One stop record (`panel.records`); a stop without a route is left out. */
+export function readStop(id: string, v: Record<string, unknown>): Stop | null {
+  const c = record(v.coords);
+  const route = str(v.route, "", 32);
+  if (route === "") return null;
+  return {
+    id,
+    route,
+    label: str(v.label, id, 48),
+    x: num(c.x, 0),
+    y: num(c.y, 0),
+    z: num(c.z, 0),
+  };
 }
 
 export function toShift(v: unknown): Shift | null {

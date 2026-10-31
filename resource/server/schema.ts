@@ -1,16 +1,20 @@
 import {
+  ACCESS_FIELDS,
+  accessFields,
   BLIP_STYLE_FIELDS,
   PLACE_PED_SPEC,
   placePedFields,
 } from "@aicore-fivem/lib/shared";
 import type { PanelSchema } from "@aicore-fivem/shared";
 import { DEFAULT_TOW_MODELS } from "common/routes";
+import { HOTDOG_FILE, HOTDOG_TAB } from "./hotdogSchema";
 
 /** ai-jobs' panel: work routes and their stops (each stop its own record so its place is set in the world). */
 export const jobsSchema: PanelSchema = {
   title: "ADMIN_TITLE",
   icon: "briefcase",
   files: {
+    hotdog: HOTDOG_FILE,
     routes: {
       kind: "records",
       sync: "all",
@@ -18,7 +22,8 @@ export const jobsSchema: PanelSchema = {
       newRecord: {
         label: "",
         kind: "random",
-        job: "",
+        jobs: [],
+        gangs: [],
         depot: { x: 0, y: 0, z: 0 },
         vehicle: "",
         spawn: { x: 0, y: 0, z: 0, heading: 0 },
@@ -36,7 +41,7 @@ export const jobsSchema: PanelSchema = {
         ped: PLACE_PED_SPEC,
         label: { type: "text", min: 1, max: 48 },
         kind: { type: "enum", values: ["ordered", "random", "gather", "tow"] },
-        job: { type: "text", lookup: "job", min: 0, max: 32 },
+        ...ACCESS_FIELDS,
         depot: { type: "vec3" },
         vehicle: { type: "text", min: 0, max: 32 },
         spawn: { type: "vec4" },
@@ -128,14 +133,7 @@ export const jobsSchema: PanelSchema = {
                 { value: "tow", label: "ADMIN_O_TOW" },
               ],
             },
-            {
-              widget: "text",
-              lookup: "job",
-              path: "job",
-              label: "ADMIN_F_JOB",
-              hint: "ADMIN_H_JOB",
-              placeholder: "ADMIN_P_JOB",
-            },
+            ...accessFields(),
             {
               widget: "point",
               path: "depot",
@@ -286,5 +284,6 @@ export const jobsSchema: PanelSchema = {
         },
       ],
     },
+    HOTDOG_TAB,
   ],
 };

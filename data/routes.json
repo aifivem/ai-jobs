@@ -3,7 +3,8 @@
   "taxi": {
     "label": "Downtown Cab Co.",
     "kind": "random",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": 894.88,
       "y": -179.22,
@@ -29,7 +30,8 @@
   "bus": {
     "label": "Dashound Bus",
     "kind": "ordered",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": 462.22,
       "y": -641.15,
@@ -55,7 +57,8 @@
   "trucker": {
     "label": "Post OP Freight",
     "kind": "random",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": 153.68,
       "y": -3211.88,
@@ -81,7 +84,8 @@
   "garbage": {
     "label": "Los Santos Sanitation",
     "kind": "random",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": -321.45,
       "y": -1545.86,
@@ -116,7 +120,8 @@
   "recycle": {
     "label": "Recycling Center",
     "kind": "gather",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": 55.55,
       "y": 6472.18,
@@ -142,7 +147,8 @@
   "vineyard": {
     "label": "Marlowe Vineyard",
     "kind": "gather",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": -1928.81,
       "y": 2059.53,
@@ -163,7 +169,8 @@
   "diving": {
     "label": "Del Perro Diving",
     "kind": "gather",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": -1684.13,
       "y": -1068.91,
@@ -193,7 +200,8 @@
   "tow": {
     "label": "Hayes Towing",
     "kind": "tow",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": 471.39,
       "y": -1311.03,
@@ -233,7 +241,8 @@
   "news": {
     "label": "Weazel News",
     "kind": "random",
-    "job": "",
+    "jobs": [],
+    "gangs": [],
     "depot": {
       "x": -598.25,
       "y": -929.86,

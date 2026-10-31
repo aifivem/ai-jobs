@@ -1,19 +1,25 @@
 import {
-  AdminWorld,
+  allows,
   cache,
   callAction,
   createBlip,
   notify,
+  onMembershipChange,
   onServerEvent,
   Points,
   progress,
 } from "@aicore-fivem/lib/client";
-import { readId } from "@aicore-fivem/lib/shared";
+import { isPublic, readId, RecordObjects } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
-import { EVENTS, readRoutes, toShift, type Shift } from "common/routes";
-
-const world = new AdminWorld(["routes", "stops"]);
-const routes = world.view("routes", readRoutes);
+import {
+  EVENTS,
+  readRoute,
+  toShift,
+  type Route,
+  type Shift,
+} from "common/routes";
+import { world } from "./content";
+import "./hotdog";
 
 /**
  * The player's shift: a route blip to the current stop, a point there that runs the stop's progress bar; depots
@@ -25,26 +31,41 @@ class Work {
   private readonly stopPoint = new Points();
   private stopBlip = 0;
 
-  rebuildDepots(): void {
-    this.depots.clear();
-    for (const route of routes.value.values()) {
-      this.depots.add(`start:${route.id}`, {
-        ped: route.ped ?? undefined,
-        coords: route.depot,
-        label: Locale("JOBS_PROMPT_START", route.label),
-        icon: "briefcase",
-        blip: { ...route.blip, label: route.label },
-        canShow: () => this.shift?.route !== route.id,
-        onPressed: () => this.toggle(route.id),
-      });
-      this.depots.add(`stop:${route.id}`, {
-        coords: route.depot,
-        label: Locale("JOBS_PROMPT_STOP", route.label),
-        icon: "circle-stop",
-        canShow: () => this.shift?.route === route.id,
-        onPressed: () => this.toggle(route.id),
-      });
-    }
+  /** Built after `depots`: `RecordObjects` builds at once. An edited route rebuilds only its own depot points. */
+  readonly routes = new RecordObjects(world, "routes", readRoute, (id, route) =>
+    this.buildDepot(id, route),
+  );
+
+  private buildDepot(id: string, route: Route): () => void {
+    // A route locked to jobs or gangs shows (and has a blip) only for who passes its access rule.
+    this.depots.add(`start:${id}`, {
+      ped: route.ped ?? undefined,
+      coords: route.depot,
+      label: Locale("JOBS_PROMPT_START", route.label),
+      icon: "briefcase",
+      blip: allows(route.access)
+        ? { ...route.blip, label: route.label }
+        : undefined,
+      canShow: () => this.shift?.route !== id && allows(route.access),
+      onPressed: () => this.toggle(id),
+    });
+    this.depots.add(`stop:${id}`, {
+      coords: route.depot,
+      label: Locale("JOBS_PROMPT_STOP", route.label),
+      icon: "circle-stop",
+      canShow: () => this.shift?.route === id,
+      onPressed: () => this.toggle(id),
+    });
+    return () => {
+      this.depots.remove(`start:${id}`);
+      this.depots.remove(`stop:${id}`);
+    };
+  }
+
+  /** Blips follow memberships: only the locked routes are built again. */
+  rebuildLocked(): void {
+    for (const [id, route] of this.routes.records)
+      if (!isPublic(route.access)) this.routes.rebuild(id);
   }
 
   set(shift: Shift | null): void {
@@ -78,7 +99,7 @@ class Work {
   async doStop(): Promise<void> {
     const shift = this.shift;
     if (!shift) return;
-    const route = routes.value.get(shift.route);
+    const route = this.routes.records.get(shift.route);
     const seconds = route?.seconds ?? 5;
     const gather = route?.kind === "gather";
     if (!gather && cache.vehicle !== false && GetEntitySpeed(cache.vehicle) > 2)
@@ -111,8 +132,7 @@ class Work {
 }
 
 const work = new Work();
-work.rebuildDepots();
-world.onChange("routes", () => work.rebuildDepots());
+onMembershipChange(() => work.rebuildLocked());
 /** The towed car's owner attaches it to the flatbed (attachments replicate from the owner). */
 onServerEvent(
   EVENTS.attach,

@@ -39,6 +39,7 @@
   },
   "fxFiles": [
     "data/routes.json",
-    "data/stops.json"
+    "data/stops.json",
+    "data/hotdog.json"
   ]
 }

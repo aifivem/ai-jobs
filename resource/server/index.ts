@@ -1,5 +1,4 @@
 import {
-  AdminPanel,
   aiLog,
   aiLogChannels,
   coordsOf,
@@ -19,24 +18,57 @@ import {
   fail,
   oneArg,
   readText,
+  RecordObjects,
   type Vec3,
 } from "@aicore-fivem/lib/shared";
 import { Locale, ResourceName } from "common";
 import {
   EVENTS,
-  readRoutes,
-  readStops,
+  readRoute,
+  readStop,
   type Route,
   type Shift,
   type Stop,
 } from "common/routes";
-import { jobsSchema } from "./schema";
+import { panel } from "./content";
+import "./hotdog";
 
 const core = resourceExport("ai-core");
-const panel = new AdminPanel(jobsSchema);
-const routes = panel.view("routes", readRoutes);
-const stops = panel.view("stops", readStops);
-aiLogChannels({ work: { active: false } });
+const routes = panel.records("routes", readRoute);
+
+/** Stops per route in id order, kept per edited stop (one stop edit touches one route's list). */
+class RouteStops {
+  private readonly byRoute = new Map<string, Map<string, Stop>>();
+  private readonly sorted = new Map<string, Stop[]>();
+
+  add(stop: Stop): () => void {
+    let map = this.byRoute.get(stop.route);
+    if (!map) this.byRoute.set(stop.route, (map = new Map()));
+    map.set(stop.id, stop);
+    this.sorted.delete(stop.route);
+    return () => {
+      map.delete(stop.id);
+      if (map.size === 0) this.byRoute.delete(stop.route);
+      this.sorted.delete(stop.route);
+    };
+  }
+
+  /** A route's stops in id order (sorted once per change of that route). */
+  of(route: string): Stop[] {
+    let list = this.sorted.get(route);
+    if (!list) {
+      list = [...(this.byRoute.get(route)?.values() ?? [])].sort((a, b) =>
+        a.id.localeCompare(b.id, "en", { numeric: true }),
+      );
+      this.sorted.set(route, list);
+    }
+    return list;
+  }
+}
+const stops = new RouteStops();
+new RecordObjects(panel, "stops", readStop, (_id, stop) => stops.add(stop));
+// The hot dog stand logs its sales on `hotdog` (server/hotdog.ts).
+aiLogChannels({ work: { active: false }, hotdog: { active: false } });
 
 /** Fastest plausible travel between stops (m/s, ~216 km/h): a stop reached sooner was teleported to. */
 const MAX_SPEED = 60;
@@ -102,7 +134,7 @@ function nextStop(
   route: Route,
   work: Work | null,
 ): { stop: Stop; index: number } | null {
-  const list = stops.value.filter((s) => s.route === route.id);
+  const list = stops.of(route.id);
   if (list.length === 0) return null;
   if (route.kind === "ordered") {
     const index = work ? (work.index + 1) % list.length : 0;
@@ -141,12 +173,11 @@ onClientCallback(
   EVENTS.start,
   { args: readTextId, lock: true },
   async (source, id) => {
-    const route = routes.value.get(id);
+    const route = routes.get(id);
     if (!route) return fail("JOBS_ERR_GONE");
     if (shifts.has(source)) return fail("JOBS_ERR_WORKING");
     if (!isNear(source, route.depot, 4)) return fail("JOBS_ERR_FAR");
-    if (route.job && !online.jobs(source).includes(route.job))
-      return fail("JOBS_ERR_JOB");
+    if (!online.allows(source, route.access)) return fail("JOBS_ERR_JOB");
     const first = nextStop(route, null);
     if (!first) return fail("JOBS_ERR_NO_STOPS");
     let vehicle: number | null = null;

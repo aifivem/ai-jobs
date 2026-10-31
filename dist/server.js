@@ -43,11 +43,14 @@ function waitFor(check, timeoutMs = 1e4, intervalMs = 0) {
 	});
 }
 // ../../../packages/lib/src/shared/read.ts
-function num(value, fallback, min = -Infinity, max = Infinity) {
+function num$1(value, fallback, min = -Infinity, max = Infinity) {
 	return typeof value == "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
 }
 function int(value, fallback, min = -Infinity, max = Infinity) {
-	return Math.round(num(value, fallback, min, max));
+	return Math.round(num$1(value, fallback, min, max));
+}
+function bool(value, fallback) {
+	return typeof value == "boolean" ? value : fallback;
 }
 function str(value, fallback, max = 64) {
 	return typeof value == "string" && value.trim() ? value.trim().slice(0, max) : fallback;
@@ -58,13 +61,20 @@ function record(value) {
 function vec4(value, fallback) {
 	let v = record(value);
 	return {
-		x: num(v.x, fallback.x),
-		y: num(v.y, fallback.y),
-		z: num(v.z, fallback.z),
-		heading: num(v.heading, fallback.heading)
+		x: num$1(v.x, fallback.x),
+		y: num$1(v.y, fallback.y),
+		z: num$1(v.z, fallback.z),
+		heading: num$1(v.heading, fallback.heading)
 	};
 }
 // ../../../packages/lib/src/shared/strict.ts
+function readFinite(value) {
+	return typeof value == "number" && Number.isFinite(value) ? value : null;
+}
+function readInt(value, min, max) {
+	return Number.isInteger(value) && value >= min && value <= max ? value : null;
+}
+const readId = (value) => readInt(value, 1, 2147483647);
 function readText(value, max) {
 	if (typeof value != "string") return null;
 	let text = value.trim();
@@ -76,7 +86,61 @@ const oneArg = (read) => ([value]) => {
 }, fail = (error) => ({
 	ok: !1,
 	error
-}), distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z), BLIP_STYLE_FIELDS = {
+}), distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z), names = (v) => Array.isArray(v) ? v.filter((x) => typeof x == "string") : [];
+function readAccess(value) {
+	let v = record(value), grades = {};
+	for (let [name, grade] of Object.entries(record(v.grades))) typeof grade == "number" && Number.isInteger(grade) && grade >= 0 && (grades[name] = grade);
+	return {
+		jobs: names(v.jobs),
+		gangs: names(v.gangs),
+		grades,
+		onDuty: bool(v.onDuty, !1)
+	};
+}
+const isPublic = (rule) => rule.jobs.length === 0 && rule.gangs.length === 0, ACCESS_FIELDS = {
+	jobs: {
+		type: "names",
+		lookup: "job",
+		optional: !0
+	},
+	gangs: {
+		type: "names",
+		lookup: "gang",
+		optional: !0
+	},
+	onDuty: {
+		type: "bool",
+		optional: !0
+	}
+};
+function accessFields() {
+	return [
+		{
+			widget: "tags",
+			lookup: "job",
+			path: "jobs",
+			label: "ADMIN_F_ACCESS_JOBS",
+			hint: "ADMIN_H_ACCESS_JOBS",
+			placeholder: "ADMIN_P_ACCESS_JOBS"
+		},
+		{
+			widget: "tags",
+			lookup: "gang",
+			path: "gangs",
+			label: "ADMIN_F_ACCESS_GANGS",
+			hint: "ADMIN_H_ACCESS_GANGS",
+			placeholder: "ADMIN_P_ACCESS_GANGS"
+		},
+		{
+			widget: "switch",
+			path: "onDuty",
+			label: "ADMIN_F_ACCESS_ON_DUTY",
+			hint: "ADMIN_H_ACCESS_ON_DUTY"
+		}
+	];
+}
+// ../../../packages/lib/src/shared/blipStyle.ts
+const BLIP_STYLE_FIELDS = {
 	sprite: {
 		type: "number",
 		min: 0,
@@ -100,7 +164,7 @@ function readBlipStyle(value, fallback) {
 	return {
 		sprite: int(v.sprite, fallback.sprite, 0, 1e3),
 		color: int(v.color, fallback.color, 0, 100),
-		scale: num(v.scale, fallback.scale, .3, 2)
+		scale: num$1(v.scale, fallback.scale, .3, 2)
 	};
 }
 // ../../../packages/lib/src/shared/records.ts
@@ -151,6 +215,28 @@ var FileViews = class {
 		if (key === void 0) return this.reset(whole);
 		let parsed = isObject(value) ? this.readOne(key, value) : null;
 		parsed === null ? this.map.delete(key) : this.map.set(key, parsed);
+	}
+}, RecordObjects = class {
+	build;
+	records;
+	built = new Map();
+	constructor(source, file, readOne, build) {
+		this.build = build, this.records = source.records(file, readOne), source.onChange(file, (key) => key === void 0 ? this.rebuildAll() : this.rebuild(key)), this.rebuildAll();
+	}
+	rebuild(key) {
+		this.built.get(key)?.(), this.built.delete(key);
+		let record = this.records.get(key);
+		if (record === void 0) return;
+		let remove = this.build(key, record);
+		remove && this.built.set(key, remove);
+	}
+	rebuildAll() {
+		for (let remove of this.built.values()) remove();
+		this.built.clear();
+		for (let [key, record] of this.records) {
+			let remove = this.build(key, record);
+			remove && this.built.set(key, remove);
+		}
 	}
 };
 // ../../../packages/lib/src/shared/lang.ts
@@ -240,6 +326,11 @@ function readPlacePed(value) {
 		coords
 	};
 }
+// ../../../packages/lib/src/shared/grid.ts
+const OFFSET = 16384, clampCell = (v) => Math.max(-16e3, Math.min(16e3, v)), gridCell = (x, y, size) => ({
+	cx: clampCell(Math.floor(x / size)),
+	cy: clampCell(Math.floor(y / size))
+}), cellKey = (cx, cy) => (clampCell(cx) + OFFSET) * 32768 + (clampCell(cy) + OFFSET);
 // ../../../packages/lib/src/shared/index.ts
 function isRecord(value) {
 	return typeof value == "object" && !!value && !Array.isArray(value);
@@ -372,6 +463,7 @@ const CORE = {
 }, ADMIN = {
 	ace: "ai.admin",
 	openCallback: "ai-core:admin:open",
+	panelDataCallback: "ai-core:admin:panelData",
 	applyCallback: "ai-core:admin:apply",
 	closeEvent: "ai-core:admin:close",
 	showEvent: "ai-core:admin:show",
@@ -385,6 +477,23 @@ const CORE = {
 	props: "ai:props",
 	setup: "ai:setup",
 	fuel: "fuel"
+}, SKILL_STAGES = {
+	easy: {
+		area: 50,
+		speed: .6
+	},
+	medium: {
+		area: 40,
+		speed: .85
+	},
+	hard: {
+		area: 25,
+		speed: 1
+	}
+}, LOCKPICK_AREAS = {
+	easy: 18,
+	medium: 11,
+	hard: 6
 }, LIB_UI = {
 	resource: "ai-lib",
 	notifyEvent: "ai-lib:client:notify",
@@ -446,7 +555,7 @@ function isNear(source, point, metres) {
 	return dx * dx + dy * dy + dz * dz <= metres * metres;
 }
 resourceExport(CORE.resource);
-const log$5 = createLogger(GetCurrentResourceName()), gates = new Set();
+const log$6 = createLogger(GetCurrentResourceName()), gates = new Set();
 on("playerDropped", () => {
 	let source = Number(globalThis.source);
 	for (let gate of gates) gate.release(source);
@@ -487,11 +596,11 @@ var ClientGate = class {
 		this.refusals.set(source, {
 			at: now,
 			skipped: 0
-		}), log$5.warn(`${this.name} refused for ${GetPlayerName(String(source))} (${source}): ${typeof reason == "string" ? reason : reason()}${more}`);
+		}), log$6.warn(`${this.name} refused for ${GetPlayerName(String(source))} (${source}): ${typeof reason == "string" ? reason : reason()}${more}`);
 	}
 };
 // ../../../packages/lib/src/server/callback.ts
-const log$4 = createLogger(GetCurrentResourceName()), resource$1 = GetCurrentResourceName(), REFUSED = Symbol("refused");
+const log$5 = createLogger(GetCurrentResourceName()), resource$1 = GetCurrentResourceName(), REFUSED = Symbol("refused");
 function onClientCallback(name, first, second) {
 	let [handler, options] = typeof first == "function" ? [first, second ?? {}] : [second, first], gate = new ClientGate(name, options, 20);
 	onNet(requestEvent(name), async (caller, id, ...raw) => {
@@ -503,7 +612,7 @@ function onClientCallback(name, first, second) {
 			let result = await gate.run(source, REFUSED, () => handler(source, ...args));
 			result === REFUSED ? emitNet(responseEvent(caller), source, id, !1, null) : emitNet(responseEvent(caller), source, id, !0, result ?? null);
 		} catch (error) {
-			log$4.error(`callback ${name} failed for ${source}`, error), emitNet(responseEvent(caller), source, id, !1, null);
+			log$5.error(`callback ${name} failed for ${source}`, error), emitNet(responseEvent(caller), source, id, !1, null);
 		}
 	});
 }
@@ -569,7 +678,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$16 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$20 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -583,7 +692,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$16.GetLookupValues(source);
+			list = core$20.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -848,7 +957,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$15 = resourceExport(CORE.resource);
+const core$19 = resourceExport(CORE.resource);
 var AdminPanel = class {
 	schema;
 	data = new Map();
@@ -864,10 +973,10 @@ var AdminPanel = class {
 	constructor(schema) {
 		this.schema = schema;
 		for (let [name, spec] of Object.entries(schema.files)) this.load(name, spec);
-		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
+		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelSummary", () => this.summary()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
 			count: 4,
 			windowMs: 1e4
-		} }), setImmediate(() => core$15.RegisterAdminPanel(this.resource));
+		} }), setImmediate(() => core$19.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -893,6 +1002,27 @@ var AdminPanel = class {
 			schema: this.schema,
 			texts: loadLocaleTexts(),
 			data: clone(Object.fromEntries(this.data))
+		};
+	}
+	summary() {
+		let data = {}, index = {};
+		for (let [file, spec] of Object.entries(this.schema.files)) {
+			let content = this.data.get(file);
+			if (spec.kind !== "records") {
+				data[file] = clone(content ?? {});
+				continue;
+			}
+			let labels = {};
+			for (let [key, record] of Object.entries(content ?? {})) labels[key] = labelOf(record, spec.labelPath) ?? key;
+			index[file] = labels;
+		}
+		return {
+			resource: this.resource,
+			schema: this.schema,
+			texts: loadLocaleTexts(),
+			data,
+			loaded: !1,
+			index
 		};
 	}
 	apply(admin, raw) {
@@ -957,7 +1087,7 @@ var AdminPanel = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$15.AdminPanelChanged({
+		if (core$19.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -978,6 +1108,15 @@ var AdminPanel = class {
 		this.data.set(name, data), (filled || raw === null || !file.hasSchemaRef()) && file.write(data);
 	}
 };
+function labelOf(record, path) {
+	if (!path) return null;
+	let at = record;
+	for (let part of path.split(".")) {
+		if (typeof at != "object" || !at) return null;
+		at = at[part];
+	}
+	return typeof at == "string" && at !== "" ? at : null;
+}
 // ../../../packages/lib/src/server/log.ts
 function aiLog(channel, message, options) {
 	optionalExport("ai-core")?.Log(channel, message, options);
@@ -995,19 +1134,19 @@ function notify(source, text, kind = "info", duration) {
 	emitNet(LIB_UI.notifyEvent, source, notification);
 }
 // ../../../packages/lib/src/server/inventory.ts
-const core$14 = resourceExport(CORE.resource), inventory = {
-	addItem: (inv, item, count = 1, metadata, slot) => core$14.AddItem(inv, item, count, metadata, slot),
-	removeItem: (inv, item, count = 1, metadata, slot) => core$14.RemoveItem(inv, item, count, metadata, slot),
-	getItemCount: (inv, item, metadata) => core$14.GetItemCount(inv, item, metadata),
-	hasItem: (inv, item, count = 1) => core$14.HasItem(inv, item, count),
-	canCarryItem: (inv, item, count = 1, metadata) => core$14.CanCarryItem(inv, item, count, metadata),
-	getItems: (inv) => core$14.GetItems(inv),
-	clearInventory: (inv) => core$14.ClearInventory(inv),
-	registerStash: (name, label, slots, maxWeight, jobs = []) => core$14.RegisterStash(name, label, slots, maxWeight, jobs),
-	openInventory: (source, inv) => core$14.OpenInventory(source, inv),
-	registerUsableItem: (name, handler) => core$14.RegisterUsableItem(name, handler),
-	getItemDefinition: (name) => core$14.GetItemDefinition(name)
-}, core$13 = resourceExport(CORE.resource);
+const core$18 = resourceExport(CORE.resource), inventory = {
+	addItem: (inv, item, count = 1, metadata, slot) => core$18.AddItem(inv, item, count, metadata, slot),
+	removeItem: (inv, item, count = 1, metadata, slot) => core$18.RemoveItem(inv, item, count, metadata, slot),
+	getItemCount: (inv, item, metadata) => core$18.GetItemCount(inv, item, metadata),
+	hasItem: (inv, item, count = 1) => core$18.HasItem(inv, item, count),
+	canCarryItem: (inv, item, count = 1, metadata) => core$18.CanCarryItem(inv, item, count, metadata),
+	getItems: (inv) => core$18.GetItems(inv),
+	clearInventory: (inv) => core$18.ClearInventory(inv),
+	registerStash: (name, label, slots, maxWeight, jobs = []) => core$18.RegisterStash(name, label, slots, maxWeight, jobs),
+	openInventory: (source, inv) => core$18.OpenInventory(source, inv),
+	registerUsableItem: (name, handler) => core$18.RegisterUsableItem(name, handler),
+	getItemDefinition: (name) => core$18.GetItemDefinition(name)
+}, core$17 = resourceExport(CORE.resource);
 function reindex(index, source, before, after) {
 	for (let name of before) {
 		let set = index.get(name);
@@ -1035,11 +1174,11 @@ var OnlinePlayers = class {
 				gangs: [],
 				gangNames: [],
 				duty: null
-			}), this.setJobs(source, core$13.GetJobs(source) ?? []), this.setGangs(source, core$13.GetGangs(source) ?? []), this.setDuty(source, core$13.GetDutyJob(source));
+			}), this.setJobs(source, core$17.GetJobs(source) ?? []), this.setGangs(source, core$17.GetGangs(source) ?? []), this.setDuty(source, core$17.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => this.setJobs(source, jobs)), on(CORE.gangsChangedEvent, (source, gangs) => this.setGangs(source, gangs)), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$13.GetLoadedSources()) {
-			let character = core$13.GetCharacter(source);
+		for (let source of core$17.GetLoadedSources()) {
+			let character = core$17.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -1108,6 +1247,20 @@ var OnlinePlayers = class {
 		let duty = this.dutyJob(source);
 		return duty !== null && jobs.includes(duty);
 	}
+	allows(source, rule) {
+		if (isPublic(rule)) return !0;
+		let min = (name) => rule.grades[name] ?? 0;
+		for (let gang of rule.gangs) {
+			let grade = this.gangGrade(source, gang);
+			if (grade !== null && grade >= min(gang)) return !0;
+		}
+		let duty = rule.onDuty ? this.dutyJob(source) : null;
+		for (let job of rule.jobs) {
+			let grade = this.jobGrade(source, job);
+			if (grade !== null && grade >= min(job) && (!rule.onDuty || duty === job)) return !0;
+		}
+		return !1;
+	}
 	countOnDuty(jobs) {
 		this.start();
 		let count = 0;
@@ -1118,10 +1271,10 @@ var OnlinePlayers = class {
 		return this.start(), this.onDuty.get(job) ?? EMPTY;
 	}
 };
-const EMPTY = new Set(), online = new OnlinePlayers(), core$12 = resourceExport(CORE.resource), vehicleKeys = {
-	give: (source, vehicle, purpose = "temporary") => core$12.GiveVehicleKeys(source, vehicle, purpose),
-	remove: (source, vehicle) => core$12.RemoveVehicleKeys(source, vehicle),
-	has: (source, vehicle) => core$12.HasVehicleKeys(source, vehicle)
+const EMPTY = new Set(), online = new OnlinePlayers(), core$16 = resourceExport(CORE.resource), vehicleKeys = {
+	give: (source, vehicle, purpose = "temporary") => core$16.GiveVehicleKeys(source, vehicle, purpose),
+	remove: (source, vehicle) => core$16.RemoveVehicleKeys(source, vehicle),
+	has: (source, vehicle) => core$16.HasVehicleKeys(source, vehicle)
 }, TYPES = new Set([
 	"automobile",
 	"bike",
@@ -1179,8 +1332,15 @@ async function spawnVehicle(options) {
 	}], ...options.seats ?? []];
 	return await Promise.all(riders.map((r) => seatPlayer(vehicle, r.source, r.seat))), vehicle;
 }
-resourceExport(CORE.resource), createLogger(GetCurrentResourceName());
-const dropped = new Set();
+function entityFromNet(netId, type) {
+	if (readId(netId) === null) return 0;
+	let entity = NetworkGetEntityFromNetworkId(netId);
+	return !entity || !DoesEntityExist(entity) ? 0 : type === void 0 || GetEntityType(entity) === type ? entity : 0;
+}
+const pedFromNet = (netId) => entityFromNet(netId, 1);
+resourceExport(CORE.resource);
+// ../../../packages/lib/src/server/players.ts
+const log$4 = createLogger(GetCurrentResourceName()), dropped = new Set();
 let listening = !1;
 function onDropped(fn) {
 	listening || (listening = !0, on("playerDropped", () => {
@@ -1196,6 +1356,269 @@ var PlayerMap = class extends Map {
 			this.delete(source), options.onDrop?.(source, value);
 		});
 	}
+}, Cooldowns = class {
+	until = new PlayerMap();
+	ready(source) {
+		return this.left(source) === 0;
+	}
+	start(source, ms) {
+		this.until.set(source, GetGameTimer() + ms);
+	}
+	take(source, ms) {
+		return this.ready(source) ? (this.start(source, ms), !0) : !1;
+	}
+	left(source) {
+		let until = this.until.get(source);
+		if (until === void 0) return 0;
+		let left = until - GetGameTimer();
+		return left > 0 ? left : (this.until.delete(source), 0);
+	}
+	clear(source) {
+		this.until.delete(source);
+	}
+}, KeyedCooldowns = class {
+	until = new Map();
+	sweepAt = 64;
+	ready(key) {
+		return this.left(key) === 0;
+	}
+	start(key, ms) {
+		ms <= 0 ? this.until.delete(key) : (this.until.size >= this.sweepAt && this.sweep(), this.until.set(key, GetGameTimer() + ms));
+	}
+	take(key, ms) {
+		return this.ready(key) ? (this.start(key, ms), !0) : !1;
+	}
+	left(key) {
+		let until = this.until.get(key);
+		if (until === void 0) return 0;
+		let left = until - GetGameTimer();
+		return left > 0 ? left : (this.until.delete(key), 0);
+	}
+	clear(key) {
+		this.until.delete(key);
+	}
+	sweep() {
+		let now = GetGameTimer();
+		for (let [key, until] of this.until) until <= now && this.until.delete(key);
+		this.sweepAt = Math.max(64, this.until.size * 2);
+	}
+};
+function onCharacter(handlers) {
+	let live = new Map(), deliver = (source, character) => {
+		if (live.set(source, character.id), handlers.loaded) try {
+			let result = handlers.loaded(source, character);
+			result instanceof Promise && result.catch((error) => log$4.error(`character loaded handler failed for ${source}`, error));
+		} catch (error) {
+			log$4.error(`character loaded handler failed for ${source}`, error);
+		}
+	}, end = (source, charId) => {
+		if (live.delete(source)) try {
+			handlers.unloaded?.(source, charId);
+		} catch (error) {
+			log$4.error(`character unloaded handler failed for ${source}`, error);
+		}
+	};
+	on(CORE.playerLoadedEvent, (source, character) => {
+		let previous = live.get(source);
+		previous !== void 0 && end(source, previous), deliver(source, character);
+	}), on(CORE.playerUnloadedEvent, (source, charId) => end(source, charId)), onDropped((source) => setImmediate(() => {
+		let charId = live.get(source);
+		charId !== void 0 && end(source, charId);
+	})), setImmediate(() => {
+		for (let source of online.sources()) {
+			if (live.has(source)) continue;
+			let character = online.character(source);
+			character && deliver(source, character);
+		}
+	});
+}
+// ../../../packages/lib/src/server/areaStream.ts
+var AreaStream = class {
+	options;
+	items = new Map();
+	cells = new Map();
+	followers = new PlayerMap({ onDrop: (source, f) => this.leave(source, f) });
+	inCell = new Map();
+	alsoOf = new Map();
+	size_;
+	range;
+	chunk;
+	stale = !1;
+	constructor(options) {
+		this.options = options, this.size_ = options.cellSize ?? 64, this.range = options.range ?? 1, this.chunk = options.chunk ?? 50;
+	}
+	get size() {
+		return this.items.size;
+	}
+	get(id) {
+		return this.items.get(id)?.item;
+	}
+	*values() {
+		for (let entry of this.items.values()) yield entry.item;
+	}
+	cellOf(x, y) {
+		return gridCell(x, y, this.size_);
+	}
+	countAt(x, y) {
+		let { cx, cy } = this.cellOf(x, y);
+		return this.cells.get(cellKey(cx, cy))?.size ?? 0;
+	}
+	*around(x, y, cells = 1) {
+		let { cx, cy } = this.cellOf(x, y);
+		for (let dx = -cells; dx <= cells; dx++) for (let dy = -cells; dy <= cells; dy++) for (let entry of this.cells.get(cellKey(cx + dx, cy + dy)) ?? []) yield entry.item;
+	}
+	set(item, resend = !0) {
+		this.stale && this.followAll();
+		let { cx, cy } = this.cellOf(item.x, item.y), also = this.options.alsoTo?.(item), entry = this.items.get(item.id);
+		if (!entry) {
+			let fresh = {
+				item,
+				cx,
+				cy,
+				also: void 0
+			};
+			this.items.set(item.id, fresh), this.file(fresh), this.setAlso(fresh, also);
+			let put = [this.options.view(item)];
+			for (let source of this.who(cx, cy, also)) this.send(source, put, []);
+			return;
+		}
+		let before = this.who(entry.cx, entry.cy, entry.also);
+		(entry.cx !== cx || entry.cy !== cy) && (this.unfile(entry), entry.cx = cx, entry.cy = cy, this.file(entry)), entry.item = item, this.setAlso(entry, also);
+		let after = this.who(cx, cy, also), gone = [item.id];
+		for (let source of before) after.has(source) || this.send(source, [], gone);
+		let put = [this.options.view(item)];
+		for (let source of after) (resend || !before.has(source)) && this.send(source, put, []);
+	}
+	delete(id) {
+		let entry = this.items.get(id);
+		if (!entry) return;
+		this.items.delete(id), this.unfile(entry);
+		let gone = [id];
+		for (let source of this.who(entry.cx, entry.cy, entry.also)) this.send(source, [], gone);
+		this.setAlso(entry, void 0);
+	}
+	load(items) {
+		for (let item of items) {
+			let old = this.items.get(item.id);
+			old && (this.unfile(old), this.setAlso(old, void 0));
+			let { cx, cy } = this.cellOf(item.x, item.y), entry = {
+				item,
+				cx,
+				cy,
+				also: void 0
+			};
+			this.items.set(item.id, entry), this.file(entry), this.setAlso(entry, this.options.alsoTo?.(item));
+		}
+		for (let [source, f] of this.followers) this.snapshot(source, f);
+	}
+	recipients(id) {
+		let entry = this.items.get(id);
+		return entry ? this.who(entry.cx, entry.cy, entry.also) : new Set();
+	}
+	knows(source, id) {
+		let entry = this.items.get(id);
+		if (!entry) return !1;
+		if (entry.also === source) return !0;
+		let f = this.followers.get(source);
+		return f !== void 0 && Math.abs(f.cx - entry.cx) <= this.range && Math.abs(f.cy - entry.cy) <= this.range;
+	}
+	start(source, at = coordsOf(source)) {
+		let { cx, cy } = this.cellOf(at.x, at.y), old = this.followers.get(source);
+		old && this.leave(source, old);
+		let f = {
+			cx,
+			cy
+		};
+		this.followers.set(source, f), this.enter(source, f), this.snapshot(source, f);
+	}
+	follow(source, cx, cy) {
+		let f = this.followers.get(source);
+		if (!f) {
+			let fresh = {
+				cx,
+				cy
+			};
+			return this.followers.set(source, fresh), this.enter(source, fresh), this.snapshot(source, fresh);
+		}
+		this.move(source, f, cx, cy);
+	}
+	followReported(source, cx, cy) {
+		let p = coordsOf(source), real = this.cellOf(p.x, p.y);
+		return Math.abs(real.cx - cx) > 1 || Math.abs(real.cy - cy) > 1 ? !1 : (this.follow(source, cx, cy), !0);
+	}
+	followAll() {
+		if (this.items.size === 0) this.stale = !0;
+		else {
+			this.stale = !1;
+			for (let [source, f] of this.followers) {
+				let p = coordsOf(source), { cx, cy } = this.cellOf(p.x, p.y);
+				this.move(source, f, cx, cy);
+			}
+		}
+	}
+	stop(source, tell = !1) {
+		let f = this.followers.get(source);
+		f && (this.followers.delete(source), this.leave(source, f), tell && this.emit(source, !0, [], []));
+	}
+	following(source) {
+		return this.followers.has(source);
+	}
+	move(source, f, cx, cy) {
+		if (f.cx === cx && f.cy === cy) return;
+		let r = this.range, removes = [], puts = [];
+		for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
+			let ox = f.cx + dx, oy = f.cy + dy;
+			if (Math.abs(ox - cx) > r || Math.abs(oy - cy) > r) for (let entry of this.cells.get(cellKey(ox, oy)) ?? []) entry.also !== source && removes.push(entry.item.id);
+			let nx = cx + dx, ny = cy + dy;
+			if (Math.abs(nx - f.cx) > r || Math.abs(ny - f.cy) > r) for (let entry of this.cells.get(cellKey(nx, ny)) ?? []) entry.also !== source && puts.push(this.options.view(entry.item));
+		}
+		this.leave(source, f), f.cx = cx, f.cy = cy, this.enter(source, f), (puts.length > 0 || removes.length > 0) && this.send(source, puts, removes);
+	}
+	snapshot(source, f) {
+		let puts = [], r = this.range;
+		for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let entry of this.cells.get(cellKey(f.cx + dx, f.cy + dy)) ?? []) puts.push(this.options.view(entry.item));
+		for (let entry of this.alsoOf.get(source) ?? []) (Math.abs(entry.cx - f.cx) > r || Math.abs(entry.cy - f.cy) > r) && puts.push(this.options.view(entry.item));
+		this.emit(source, !0, puts, []);
+	}
+	who(cx, cy, also) {
+		let out = new Set(), r = this.range;
+		for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let source of this.inCell.get(cellKey(cx + dx, cy + dy)) ?? []) out.add(source);
+		return also !== void 0 && out.add(also), out;
+	}
+	send(source, puts, removes) {
+		this.emit(source, !1, puts, removes);
+	}
+	emit(source, reset, puts, removes) {
+		let extra = this.options.extra?.() ?? [], { event } = this.options;
+		emitNet(event, source, reset, puts.slice(0, this.chunk), removes, ...extra);
+		for (let i = this.chunk; i < puts.length; i += this.chunk) emitNet(event, source, !1, puts.slice(i, i + this.chunk), [], ...extra);
+	}
+	setAlso(entry, also) {
+		if (entry.also === also) return;
+		if (entry.also !== void 0) {
+			let set = this.alsoOf.get(entry.also);
+			set?.delete(entry), set?.size === 0 && this.alsoOf.delete(entry.also);
+		}
+		if (entry.also = also, also === void 0) return;
+		let set = this.alsoOf.get(also);
+		set || this.alsoOf.set(also, set = new Set()), set.add(entry);
+	}
+	file(entry) {
+		let key = cellKey(entry.cx, entry.cy), set = this.cells.get(key);
+		set || this.cells.set(key, set = new Set()), set.add(entry);
+	}
+	unfile(entry) {
+		let key = cellKey(entry.cx, entry.cy), set = this.cells.get(key);
+		set?.delete(entry), set?.size === 0 && this.cells.delete(key);
+	}
+	enter(source, f) {
+		let key = cellKey(f.cx, f.cy), set = this.inCell.get(key);
+		set || this.inCell.set(key, set = new Set()), set.add(source);
+	}
+	leave(source, f) {
+		let key = cellKey(f.cx, f.cy), set = this.inCell.get(key);
+		set?.delete(source), set?.size === 0 && this.inCell.delete(key);
+	}
 };
 // ../../../packages/lib/src/server/progressFor.ts
 const running = new PlayerMap({ onDrop: (_source, settle) => settle(!1) });
@@ -1203,6 +1626,38 @@ on(CORE.playerUnloadedEvent, (source) => {
 	let settle = running.get(source);
 	settle && settle(!1);
 });
+// ../../../packages/lib/src/server/definitions.ts
+const core$14 = resourceExport("ai-core");
+new class {
+	jobs = new Map();
+	gangs = new Map();
+	constructor() {
+		on(CORE.definitionsChangedEvent, (file, name) => {
+			typeof name == "string" && (file === "jobs" ? this.jobs.delete(name) : file === "gangs" && this.gangs.delete(name));
+		});
+	}
+	job(name) {
+		let def = this.jobs.get(name);
+		return def === void 0 && this.jobs.set(name, def = core$14.GetJobDefinition(name) ?? null), def;
+	}
+	gang(name) {
+		let def = this.gangs.get(name);
+		return def === void 0 && this.gangs.set(name, def = core$14.GetGangDefinition(name) ?? null), def;
+	}
+}();
+async function minigameFor(source, options) {
+	let level = options.difficulty ?? "medium", request = options.game === "lockpick" ? {
+		kind: "lockpick",
+		pins: Math.min(6, Math.max(1, Math.floor(options.pins ?? 1))),
+		area: LOCKPICK_AREAS[level],
+		picks: Math.min(10, Math.max(1, Math.floor(options.picks ?? 1)))
+	} : {
+		kind: "skillCheck",
+		stages: Array.from({ length: Math.min(10, Math.max(1, options.rounds ?? 2)) }, () => SKILL_STAGES[level]),
+		keys: options.keys ?? ["e"]
+	}, answer = await triggerClientCallback(LIB_UI.minigameForCallback, source, [request], 12e4).catch(() => null);
+	return answer === !0 || answer === "opened" ? "won" : answer === "broken" ? "broken" : "lost";
+}
 // ../../../packages/lib/src/server/command.ts
 const resource = GetCurrentResourceName();
 createLogger(resource), new class {
@@ -1230,9 +1685,58 @@ createLogger(resource), new class {
 			if (name === resource) for (let command of this.list) for (let n of command.info.names) emitNet("chat:removeSuggestion", -1, `/${n}`);
 		});
 	}
-}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib");
-// ../../../packages/lib/src/fivem/scheduler.ts
-var Group = class {
+}();
+// ../../../packages/lib/src/server/netEvent.ts
+const log$2 = createLogger(GetCurrentResourceName());
+function onClientEvent(name, first, second) {
+	let [handler, options] = typeof first == "function" ? [first, second ?? {}] : [second, first], gate = new ClientGate(name, options, 10);
+	onNet(name, (...raw) => {
+		let source = Number(globalThis.source), args = gate.check(source, raw);
+		args && gate.run(source, void 0, () => handler(source, ...args)).catch((error) => log$2.error(`event ${name} failed for ${source}`, error));
+	});
+}
+createLogger("aicore-lib");
+let log = null;
+var ScheduledJob = class {
+	interval;
+	fn;
+	name;
+	gen = 0;
+	active = !1;
+	stopped = !1;
+	quietUntil = 0;
+	skipped = 0;
+	constructor(interval, fn, name) {
+		this.interval = interval, this.fn = fn, this.name = name;
+	}
+	get running() {
+		return this.active;
+	}
+	set(active) {
+		active === this.active || active && this.stopped || (this.active = active, active ? scheduler.activate(this) : scheduler.deactivate(this));
+	}
+	stop() {
+		this.set(!1), this.stopped = !0;
+	}
+	call() {
+		try {
+			let result = this.fn();
+			result instanceof Promise && result.catch((error) => this.fail(error));
+		} catch (error) {
+			this.fail(error);
+		}
+	}
+	fail(error) {
+		let now = GetGameTimer();
+		if (now < this.quietUntil) {
+			this.skipped++;
+			return;
+		}
+		this.quietUntil = now + 1e4;
+		let more = this.skipped ? ` (+${this.skipped} more)` : "";
+		this.skipped = 0, log ??= createLogger(GetCurrentResourceName()), log.error(`job "${this.name}" failed${more}`, error instanceof Error ? error.stack ?? error.message : error);
+	}
+}, Group = class {
 	interval;
 	jobs = Array(8);
 	gens = Array(8).fill(0);
@@ -1282,7 +1786,7 @@ var Group = class {
 		this.jobs = jobs, this.gens = gens, this.dues = dues, this.head = 0, this.mask = size - 1;
 	}
 };
-new class {
+const scheduler = new class {
 	groups = [];
 	byInterval = new Map();
 	tick = null;
@@ -1317,7 +1821,12 @@ new class {
 		}
 		groups.length = kept, this.nextDue = soonest;
 	};
-}(), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+}();
+function every(ms, fn, options = {}) {
+	let job = new ScheduledJob(Math.max(0, Math.floor(ms)), fn, options.name ?? (fn.name || "anonymous"));
+	return options.active !== !1 && job.set(!0), job;
+}
+IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/index.ts
 function isOnline(source) {
 	return !!GetPlayerName(String(source));
@@ -1352,63 +1861,321 @@ const EVENTS = {
 	"gather",
 	"tow"
 ];
-function readRoutes(raw) {
-	let out = new Map();
-	for (let [id, value] of Object.entries(record(raw))) {
-		let v = record(value), d = record(v.depot), kind = KINDS.includes(v.kind) ? v.kind : "random", gatherMin = int(v.gatherMin, 1, 1, 100), towModels = Array.isArray(v.towModels) ? v.towModels.filter((m) => typeof m == "string") : [], blip = record(v.blip);
-		out.set(id, {
-			ped: readPlacePed(v.ped),
-			id,
-			label: str(v.label, id, 48),
-			kind,
-			job: str(v.job, "", 32),
-			depot: {
-				x: num(d.x, 0),
-				y: num(d.y, 0),
-				z: num(d.z, 0)
-			},
-			vehicle: str(v.vehicle, "", 32),
-			spawn: vec4(v.spawn, {
-				x: num(d.x, 0),
-				y: num(d.y, 0),
-				z: num(d.z, 0),
-				heading: 0
-			}),
-			pay: int(v.pay, 0, 0, 1e5),
-			account: str(v.account, "bank", 32) || "bank",
-			seconds: int(v.seconds, 5, 0, 120),
-			item: str(v.item, "", 48),
-			stops: int(v.stops, 0, 0, 100),
-			gatherMin,
-			gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
-			towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
-			blip: readBlipStyle(blip, {
-				sprite: KIND_SPRITE[kind],
-				color: 5,
-				scale: .65
-			})
-		});
+function readRoute(id, v) {
+	let d = record(v.depot), kind = KINDS.includes(v.kind) ? v.kind : "random", gatherMin = int(v.gatherMin, 1, 1, 100), towModels = Array.isArray(v.towModels) ? v.towModels.filter((m) => typeof m == "string") : [], blip = record(v.blip);
+	return {
+		ped: readPlacePed(v.ped),
+		id,
+		label: str(v.label, id, 48),
+		kind,
+		access: readAccess(v),
+		depot: {
+			x: num$1(d.x, 0),
+			y: num$1(d.y, 0),
+			z: num$1(d.z, 0)
+		},
+		vehicle: str(v.vehicle, "", 32),
+		spawn: vec4(v.spawn, {
+			x: num$1(d.x, 0),
+			y: num$1(d.y, 0),
+			z: num$1(d.z, 0),
+			heading: 0
+		}),
+		pay: int(v.pay, 0, 0, 1e5),
+		account: str(v.account, "bank", 32) || "bank",
+		seconds: int(v.seconds, 5, 0, 120),
+		item: str(v.item, "", 48),
+		stops: int(v.stops, 0, 0, 100),
+		gatherMin,
+		gatherMax: Math.max(gatherMin, int(v.gatherMax, 3, 1, 100)),
+		towModels: towModels.length ? towModels : DEFAULT_TOW_MODELS,
+		blip: readBlipStyle(blip, {
+			sprite: KIND_SPRITE[kind],
+			color: 5,
+			scale: .65
+		})
+	};
+}
+function readStop(id, v) {
+	let c = record(v.coords), route = str(v.route, "", 32);
+	return route === "" ? null : {
+		id,
+		route,
+		label: str(v.label, id, 48),
+		x: num$1(c.x, 0),
+		y: num$1(c.y, 0),
+		z: num$1(c.z, 0)
+	};
+}
+// resource/server/hotdogSchema.ts
+const price = {
+	type: "number",
+	min: 0,
+	max: 1e4,
+	integer: !0
+}, account = {
+	type: "text",
+	lookup: "account",
+	min: 2,
+	max: 32,
+	pattern: "^[a-z0-9_]{2,32}$"
+}, HOTDOG_FILE = {
+	kind: "settings",
+	sync: "all",
+	sections: {
+		enabled: { type: "bool" },
+		...ACCESS_FIELDS,
+		coords: { type: "vec3" },
+		ped: PLACE_PED_SPEC,
+		blip: {
+			type: "object",
+			fields: BLIP_STYLE_FIELDS
+		},
+		spawn: { type: "vec4" },
+		model: {
+			type: "text",
+			min: 2,
+			max: 64
+		},
+		deposit: {
+			type: "number",
+			min: 0,
+			max: 1e6,
+			integer: !0
+		},
+		depositAccount: account,
+		payAccount: account,
+		checks: {
+			type: "number",
+			min: 1,
+			max: 10,
+			integer: !0
+		},
+		repGain: {
+			type: "object",
+			fields: {
+				exotic: {
+					type: "number",
+					min: 0,
+					max: 100,
+					integer: !0
+				},
+				rare: {
+					type: "number",
+					min: 0,
+					max: 100,
+					integer: !0
+				},
+				common: {
+					type: "number",
+					min: 0,
+					max: 100,
+					integer: !0
+				}
+			}
+		},
+		maxRep: {
+			type: "number",
+			min: 0,
+			max: 1e5,
+			integer: !0
+		},
+		levels: {
+			type: "list",
+			min: 1,
+			max: 10,
+			of: {
+				type: "object",
+				fields: {
+					rep: {
+						type: "number",
+						min: 0,
+						max: 1e5,
+						integer: !0
+					},
+					stock: {
+						type: "number",
+						min: 1,
+						max: 1e3,
+						integer: !0
+					},
+					exoticMin: price,
+					exoticMax: price,
+					rareMin: price,
+					rareMax: price,
+					commonMin: price,
+					commonMax: price
+				}
+			}
+		}
 	}
-	return out;
-}
-function readStops(raw) {
-	return Object.entries(record(raw)).map(([id, value]) => {
-		let v = record(value), c = record(v.coords);
-		return {
-			id,
-			route: str(v.route, "", 32),
-			label: str(v.label, id, 48),
-			x: num(c.x, 0),
-			y: num(c.y, 0),
-			z: num(c.z, 0)
-		};
-	}).filter((s) => s.route !== "").sort((a, b) => a.id.localeCompare(b.id, "en", { numeric: !0 }));
-}
-// resource/server/schema.ts
-const jobsSchema = {
+}, NEW_LEVEL = {
+	rep: 0,
+	stock: 15,
+	exoticMin: 8,
+	exoticMax: 12,
+	rareMin: 6,
+	rareMax: 9,
+	commonMin: 4,
+	commonMax: 6
+}, num = (path, key, max, unit) => ({
+	widget: "number",
+	path,
+	label: `ADMIN_F_HD_${key}`,
+	hint: `ADMIN_H_HD_${key}`,
+	min: 0,
+	max,
+	...unit ? { unit } : {}
+}), priceRow = (path, key) => ({
+	widget: "number",
+	path,
+	label: `ADMIN_F_HD_${key}`,
+	min: 0,
+	max: 1e4,
+	unit: "$"
+}), HOTDOG_TAB = {
+	id: "hotdog",
+	file: "hotdog",
+	icon: "utensils",
+	label: "ADMIN_TAB_HOTDOG",
+	desc: "ADMIN_TAB_HOTDOG_DESC",
+	cards: [
+		{
+			icon: "store",
+			title: "ADMIN_C_HD_STAND",
+			desc: "ADMIN_C_HD_STAND_DESC",
+			fields: [
+				{
+					widget: "switch",
+					path: "enabled",
+					label: "ADMIN_F_HD_ENABLED",
+					hint: "ADMIN_H_HD_ENABLED"
+				},
+				{
+					widget: "point",
+					path: "coords",
+					label: "ADMIN_F_HD_COORDS",
+					hint: "ADMIN_H_HD_COORDS",
+					ground: !0
+				},
+				{
+					widget: "point",
+					path: "spawn",
+					label: "ADMIN_F_HD_SPAWN",
+					hint: "ADMIN_H_HD_SPAWN",
+					heading: !0,
+					ground: !0
+				},
+				{
+					widget: "model",
+					kind: "object",
+					path: "model",
+					label: "ADMIN_F_HD_MODEL",
+					placeholder: "ADMIN_P_HD_MODEL"
+				},
+				...accessFields(),
+				{
+					widget: "blip",
+					path: "blip",
+					label: "ADMIN_F_HD_BLIP"
+				}
+			]
+		},
+		{
+			icon: "money-bill-wave",
+			title: "ADMIN_C_HD_MONEY",
+			desc: "ADMIN_C_HD_MONEY_DESC",
+			fields: [
+				num("deposit", "DEPOSIT", 1e6, "$"),
+				{
+					widget: "text",
+					lookup: "account",
+					path: "depositAccount",
+					label: "ADMIN_F_HD_DEPOSIT_ACCOUNT",
+					hint: "ADMIN_H_HD_DEPOSIT_ACCOUNT",
+					placeholder: "ADMIN_P_HD_ACCOUNT"
+				},
+				{
+					widget: "text",
+					lookup: "account",
+					path: "payAccount",
+					label: "ADMIN_F_HD_PAY_ACCOUNT",
+					hint: "ADMIN_H_HD_PAY_ACCOUNT",
+					placeholder: "ADMIN_P_HD_ACCOUNT"
+				}
+			]
+		},
+		{
+			icon: "ranking-star",
+			title: "ADMIN_C_HD_SKILL",
+			desc: "ADMIN_C_HD_SKILL_DESC",
+			fields: [
+				num("checks", "CHECKS", 10),
+				num("repGain.exotic", "REP_EXOTIC", 100),
+				num("repGain.rare", "REP_RARE", 100),
+				num("repGain.common", "REP_COMMON", 100),
+				num("maxRep", "MAX_REP", 1e5)
+			]
+		},
+		{
+			icon: "list",
+			title: "ADMIN_C_HD_LEVELS",
+			desc: "ADMIN_C_HD_LEVELS_DESC",
+			fields: [{
+				widget: "list",
+				path: "levels",
+				label: "ADMIN_F_HD_LEVELS",
+				addLabel: "ADMIN_ADD_HD_LEVEL",
+				max: 10,
+				newRow: NEW_LEVEL,
+				rows: [{
+					widget: "number",
+					path: "rep",
+					label: "ADMIN_F_HD_LEVEL_REP",
+					min: 0,
+					max: 1e5
+				}, {
+					widget: "number",
+					path: "stock",
+					label: "ADMIN_F_HD_LEVEL_STOCK",
+					min: 1,
+					max: 1e3
+				}]
+			}]
+		},
+		{
+			icon: "tag",
+			title: "ADMIN_C_HD_PRICES",
+			desc: "ADMIN_C_HD_PRICES_DESC",
+			fields: [{
+				widget: "list",
+				path: "levels",
+				label: "ADMIN_F_HD_LEVELS",
+				addLabel: "ADMIN_ADD_HD_LEVEL",
+				max: 10,
+				newRow: NEW_LEVEL,
+				rows: [
+					priceRow("exoticMin", "EXOTIC_MIN"),
+					priceRow("exoticMax", "EXOTIC_MAX"),
+					priceRow("rareMin", "RARE_MIN"),
+					priceRow("rareMax", "RARE_MAX"),
+					priceRow("commonMin", "COMMON_MIN"),
+					priceRow("commonMax", "COMMON_MAX")
+				]
+			}]
+		},
+		{
+			icon: "user",
+			title: "ADMIN_C_PED",
+			desc: "ADMIN_C_PED_DESC",
+			fields: placePedFields()
+		}
+	]
+}, panel = new AdminPanel({
 	title: "ADMIN_TITLE",
 	icon: "briefcase",
 	files: {
+		hotdog: HOTDOG_FILE,
 		routes: {
 			kind: "records",
 			sync: "all",
@@ -1416,7 +2183,8 @@ const jobsSchema = {
 			newRecord: {
 				label: "",
 				kind: "random",
-				job: "",
+				jobs: [],
+				gangs: [],
 				depot: {
 					x: 0,
 					y: 0,
@@ -1459,12 +2227,7 @@ const jobsSchema = {
 						"tow"
 					]
 				},
-				job: {
-					type: "text",
-					lookup: "job",
-					min: 0,
-					max: 32
-				},
+				...ACCESS_FIELDS,
 				depot: { type: "vec3" },
 				vehicle: {
 					type: "text",
@@ -1560,217 +2323,605 @@ const jobsSchema = {
 			}
 		}
 	},
-	tabs: [{
-		id: "routes",
-		file: "routes",
-		icon: "briefcase",
-		label: "ADMIN_TAB_ROUTES",
-		desc: "ADMIN_TAB_ROUTES_DESC",
-		listSub: "kind",
-		createLabel: "ADMIN_NEW_ROUTE",
-		deleteLabel: "ADMIN_DELETE_ROUTE",
-		deleteDesc: "ADMIN_DELETE_ROUTE_DESC",
-		cards: [
-			{
-				icon: "briefcase",
-				title: "ADMIN_C_ROUTE",
-				desc: "ADMIN_C_ROUTE_DESC",
+	tabs: [
+		{
+			id: "routes",
+			file: "routes",
+			icon: "briefcase",
+			label: "ADMIN_TAB_ROUTES",
+			desc: "ADMIN_TAB_ROUTES_DESC",
+			listSub: "kind",
+			createLabel: "ADMIN_NEW_ROUTE",
+			deleteLabel: "ADMIN_DELETE_ROUTE",
+			deleteDesc: "ADMIN_DELETE_ROUTE_DESC",
+			cards: [
+				{
+					icon: "briefcase",
+					title: "ADMIN_C_ROUTE",
+					desc: "ADMIN_C_ROUTE_DESC",
+					fields: [
+						{
+							widget: "text",
+							path: "label",
+							suggest: { from: "depot" },
+							label: "ADMIN_F_LABEL",
+							placeholder: "ADMIN_P_LABEL"
+						},
+						{
+							widget: "select",
+							path: "kind",
+							label: "ADMIN_F_KIND",
+							hint: "ADMIN_H_KIND",
+							options: [
+								{
+									value: "random",
+									label: "ADMIN_O_RANDOM"
+								},
+								{
+									value: "ordered",
+									label: "ADMIN_O_ORDERED"
+								},
+								{
+									value: "gather",
+									label: "ADMIN_O_GATHER"
+								},
+								{
+									value: "tow",
+									label: "ADMIN_O_TOW"
+								}
+							]
+						},
+						...accessFields(),
+						{
+							widget: "point",
+							path: "depot",
+							label: "ADMIN_F_DEPOT",
+							hint: "ADMIN_H_DEPOT",
+							ground: !0
+						},
+						{
+							widget: "number",
+							path: "stops",
+							label: "ADMIN_F_STOPS",
+							hint: "ADMIN_H_STOPS",
+							min: 0,
+							max: 100
+						},
+						{
+							widget: "number",
+							path: "seconds",
+							label: "ADMIN_F_SECONDS",
+							hint: "ADMIN_H_SECONDS",
+							min: 0,
+							max: 120,
+							unit: "s"
+						},
+						{
+							widget: "blip",
+							path: "blip",
+							label: "ADMIN_F_BLIP"
+						}
+					]
+				},
+				{
+					icon: "car",
+					title: "ADMIN_C_VEHICLE",
+					desc: "ADMIN_C_VEHICLE_DESC",
+					fields: [
+						{
+							widget: "text",
+							path: "vehicle",
+							label: "ADMIN_F_VEHICLE",
+							hint: "ADMIN_H_VEHICLE",
+							placeholder: "ADMIN_P_VEHICLE"
+						},
+						{
+							widget: "point",
+							path: "spawn",
+							label: "ADMIN_F_SPAWN",
+							heading: !0,
+							ground: !0
+						},
+						{
+							widget: "number",
+							path: "pay",
+							label: "ADMIN_F_PAY",
+							hint: "ADMIN_H_PAY",
+							min: 0,
+							max: 1e5,
+							unit: "$"
+						},
+						{
+							widget: "text",
+							lookup: "account",
+							path: "account",
+							label: "ADMIN_F_ACCOUNT",
+							hint: "ADMIN_H_ACCOUNT"
+						},
+						{
+							widget: "tags",
+							path: "towModels",
+							label: "ADMIN_F_TOW_MODELS",
+							hint: "ADMIN_H_TOW_MODELS",
+							placeholder: "ADMIN_P_VEHICLE",
+							showIf: {
+								path: "kind",
+								values: ["tow"]
+							}
+						}
+					]
+				},
+				{
+					icon: "box",
+					title: "ADMIN_C_GATHER",
+					desc: "ADMIN_C_GATHER_DESC",
+					fields: [
+						{
+							widget: "text",
+							lookup: "item",
+							path: "item",
+							label: "ADMIN_F_ITEM",
+							hint: "ADMIN_H_ITEM",
+							placeholder: "ADMIN_P_ITEM"
+						},
+						{
+							widget: "number",
+							path: "gatherMin",
+							label: "ADMIN_F_GATHER_MIN",
+							min: 1,
+							max: 100
+						},
+						{
+							widget: "number",
+							path: "gatherMax",
+							label: "ADMIN_F_GATHER_MAX",
+							hint: "ADMIN_H_GATHER_MAX",
+							min: 1,
+							max: 100
+						}
+					]
+				},
+				{
+					icon: "user",
+					title: "ADMIN_C_PED",
+					desc: "ADMIN_C_PED_DESC",
+					fields: placePedFields()
+				}
+			]
+		},
+		{
+			id: "stops",
+			file: "stops",
+			icon: "location-dot",
+			label: "ADMIN_TAB_STOPS",
+			desc: "ADMIN_TAB_STOPS_DESC",
+			listSub: "route",
+			createLabel: "ADMIN_NEW_STOP",
+			deleteLabel: "ADMIN_DELETE_STOP",
+			cards: [{
+				icon: "location-dot",
+				title: "ADMIN_C_STOP",
+				desc: "ADMIN_C_STOP_DESC",
 				fields: [
+					{
+						widget: "text",
+						path: "route",
+						label: "ADMIN_F_ROUTE",
+						hint: "ADMIN_H_ROUTE",
+						placeholder: "ADMIN_P_ROUTE"
+					},
 					{
 						widget: "text",
 						path: "label",
-						suggest: { from: "depot" },
-						label: "ADMIN_F_LABEL",
-						placeholder: "ADMIN_P_LABEL"
-					},
-					{
-						widget: "select",
-						path: "kind",
-						label: "ADMIN_F_KIND",
-						hint: "ADMIN_H_KIND",
-						options: [
-							{
-								value: "random",
-								label: "ADMIN_O_RANDOM"
-							},
-							{
-								value: "ordered",
-								label: "ADMIN_O_ORDERED"
-							},
-							{
-								value: "gather",
-								label: "ADMIN_O_GATHER"
-							},
-							{
-								value: "tow",
-								label: "ADMIN_O_TOW"
-							}
-						]
-					},
-					{
-						widget: "text",
-						lookup: "job",
-						path: "job",
-						label: "ADMIN_F_JOB",
-						hint: "ADMIN_H_JOB",
-						placeholder: "ADMIN_P_JOB"
+						suggest: { from: "coords" },
+						label: "ADMIN_F_STOP_LABEL",
+						placeholder: "ADMIN_P_STOP_LABEL"
 					},
 					{
 						widget: "point",
-						path: "depot",
-						label: "ADMIN_F_DEPOT",
-						hint: "ADMIN_H_DEPOT",
+						path: "coords",
+						label: "ADMIN_F_COORDS",
+						hint: "ADMIN_H_COORDS",
 						ground: !0
-					},
-					{
-						widget: "number",
-						path: "stops",
-						label: "ADMIN_F_STOPS",
-						hint: "ADMIN_H_STOPS",
-						min: 0,
-						max: 100
-					},
-					{
-						widget: "number",
-						path: "seconds",
-						label: "ADMIN_F_SECONDS",
-						hint: "ADMIN_H_SECONDS",
-						min: 0,
-						max: 120,
-						unit: "s"
-					},
-					{
-						widget: "blip",
-						path: "blip",
-						label: "ADMIN_F_BLIP"
 					}
 				]
-			},
-			{
-				icon: "car",
-				title: "ADMIN_C_VEHICLE",
-				desc: "ADMIN_C_VEHICLE_DESC",
-				fields: [
-					{
-						widget: "text",
-						path: "vehicle",
-						label: "ADMIN_F_VEHICLE",
-						hint: "ADMIN_H_VEHICLE",
-						placeholder: "ADMIN_P_VEHICLE"
-					},
-					{
-						widget: "point",
-						path: "spawn",
-						label: "ADMIN_F_SPAWN",
-						heading: !0,
-						ground: !0
-					},
-					{
-						widget: "number",
-						path: "pay",
-						label: "ADMIN_F_PAY",
-						hint: "ADMIN_H_PAY",
-						min: 0,
-						max: 1e5,
-						unit: "$"
-					},
-					{
-						widget: "text",
-						lookup: "account",
-						path: "account",
-						label: "ADMIN_F_ACCOUNT",
-						hint: "ADMIN_H_ACCOUNT"
-					},
-					{
-						widget: "tags",
-						path: "towModels",
-						label: "ADMIN_F_TOW_MODELS",
-						hint: "ADMIN_H_TOW_MODELS",
-						placeholder: "ADMIN_P_VEHICLE",
-						showIf: {
-							path: "kind",
-							values: ["tow"]
-						}
-					}
-				]
-			},
-			{
-				icon: "box",
-				title: "ADMIN_C_GATHER",
-				desc: "ADMIN_C_GATHER_DESC",
-				fields: [
-					{
-						widget: "text",
-						lookup: "item",
-						path: "item",
-						label: "ADMIN_F_ITEM",
-						hint: "ADMIN_H_ITEM",
-						placeholder: "ADMIN_P_ITEM"
-					},
-					{
-						widget: "number",
-						path: "gatherMin",
-						label: "ADMIN_F_GATHER_MIN",
-						min: 1,
-						max: 100
-					},
-					{
-						widget: "number",
-						path: "gatherMax",
-						label: "ADMIN_F_GATHER_MAX",
-						hint: "ADMIN_H_GATHER_MAX",
-						min: 1,
-						max: 100
-					}
-				]
-			},
-			{
-				icon: "user",
-				title: "ADMIN_C_PED",
-				desc: "ADMIN_C_PED_DESC",
-				fields: placePedFields()
+			}]
+		},
+		HOTDOG_TAB
+	]
+}), HOTDOG_EVENTS = {
+	start: "ai-jobs:hotdog:start",
+	stop: "ai-jobs:hotdog:stop",
+	grab: "ai-jobs:hotdog:grab",
+	release: "ai-jobs:hotdog:release",
+	prepare: "ai-jobs:hotdog:prepare",
+	offer: "ai-jobs:hotdog:offer",
+	sell: "ai-jobs:hotdog:sell",
+	decline: "ai-jobs:hotdog:decline",
+	stands: "ai-jobs:client:hotdogStands",
+	shift: "ai-jobs:client:hotdogShift",
+	cooking: "ai-jobs:client:hotdogCooking"
+}, QUALITIES = [
+	"exotic",
+	"rare",
+	"common"
+], QB_LEVELS = [
+	[
+		0,
+		15,
+		8,
+		12,
+		6,
+		9,
+		4,
+		6
+	],
+	[
+		50,
+		30,
+		9,
+		13,
+		7,
+		10,
+		5,
+		7
+	],
+	[
+		100,
+		45,
+		10,
+		14,
+		8,
+		11,
+		6,
+		9
+	],
+	[
+		200,
+		60,
+		11,
+		15,
+		9,
+		12,
+		7,
+		9
+	]
+].map(([rep = 0, stock = 0, a = 0, b = 0, c = 0, d = 0, e = 0, f = 0]) => ({
+	rep,
+	stock,
+	prices: {
+		exotic: {
+			min: a,
+			max: b
+		},
+		rare: {
+			min: c,
+			max: d
+		},
+		common: {
+			min: e,
+			max: f
+		}
+	}
+}));
+function readLevel(v) {
+	let range = (q) => {
+		let min = int(v[`${q}Min`], 1, 0, 1e4);
+		return {
+			min,
+			max: Math.max(min, int(v[`${q}Max`], min, 0, 1e4))
+		};
+	};
+	return {
+		rep: int(v.rep, 0, 0, 1e5),
+		stock: int(v.stock, 15, 1, 1e3),
+		prices: {
+			exotic: range("exotic"),
+			rare: range("rare"),
+			common: range("common")
+		}
+	};
+}
+function readHotdog(raw) {
+	let v = record(raw), c = record(v.coords), coords = {
+		x: num$1(c.x, 0),
+		y: num$1(c.y, 0),
+		z: num$1(c.z, 0)
+	}, levels = Array.isArray(v.levels) ? v.levels.map((row) => readLevel(record(row))) : [], gain = record(v.repGain);
+	return {
+		enabled: bool(v.enabled, !0),
+		access: readAccess(v),
+		coords,
+		ped: readPlacePed(v.ped),
+		blip: readBlipStyle(v.blip, {
+			sprite: 542,
+			color: 17,
+			scale: .6
+		}),
+		spawn: vec4(v.spawn, {
+			...coords,
+			heading: 0
+		}),
+		model: str(v.model, "prop_hotdogstand_01", 64),
+		deposit: int(v.deposit, 250, 0, 1e6),
+		depositAccount: str(v.depositAccount, "bank", 32),
+		payAccount: str(v.payAccount, "cash", 32),
+		checks: int(v.checks, 3, 1, 10),
+		repGain: {
+			exotic: int(gain.exotic, 3, 0, 100),
+			rare: int(gain.rare, 2, 0, 100),
+			common: int(gain.common, 1, 0, 100)
+		},
+		maxRep: int(v.maxRep, 200, 0, 1e5),
+		levels: (levels.length ? levels : QB_LEVELS).sort((a, b) => a.rep - b.rep)
+	};
+}
+function levelOf(levels, rep) {
+	let level = 0;
+	for (let i = 0; i < levels.length; i++) rep >= (levels[i]?.rep ?? 0) && (level = i);
+	return level;
+}
+// resource/server/hotdogStands.ts
+const stands = new class {
+	nextId = 1;
+	stream = new AreaStream({
+		event: HOTDOG_EVENTS.stands,
+		view: (stand) => stand
+	});
+	get(id) {
+		return this.stream.get(id);
+	}
+	add(owner, at, heading) {
+		let stand = {
+			id: this.nextId++,
+			x: at.x,
+			y: at.y,
+			z: at.z,
+			heading,
+			owner,
+			pusher: 0
+		};
+		return this.stream.set(stand), stand;
+	}
+	update(id, change) {
+		let stand = this.stream.get(id);
+		stand && this.stream.set({
+			...stand,
+			...change
+		});
+	}
+	remove(id) {
+		this.stream.delete(id);
+	}
+	start(source) {
+		this.stream.start(source);
+	}
+	stop(source) {
+		this.stream.stop(source);
+	}
+	follow() {
+		if (this.stream.size !== 0) {
+			this.stream.followAll();
+			for (let stand of this.stream.values()) {
+				if (!stand.pusher) continue;
+				let p = coordsOf(stand.pusher);
+				distance(p, stand) > 8 && this.stream.set({
+					...stand,
+					x: p.x,
+					y: p.y,
+					z: p.z
+				}, !1);
 			}
-		]
+		}
+	}
+}();
+every(2e3, () => stands.follow(), { name: "hotdogFollow" }), onCharacter({
+	loaded: (source) => stands.start(source),
+	unloaded: (source) => stands.stop(source)
+});
+// resource/server/hotdogShifts.ts
+const core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", readHotdog), shifts$1 = new class {
+	map = new PlayerMap({ onDrop: (_source, shift) => stands.remove(shift.stand) });
+	get(source) {
+		return this.map.get(source);
+	}
+	start(source, deposit, account) {
+		let s = hotdogSettings.value, shift = {
+			stand: stands.add(source, s.spawn, s.spawn.heading).id,
+			deposit,
+			account,
+			rep: int(record(core$3.GetMeta(source, "rep")).hotdog, 0, 0, 1e6),
+			stock: {
+				exotic: 0,
+				rare: 0,
+				common: 0
+			},
+			offer: null
+		};
+		this.map.set(source, shift), this.send(source, shift);
+	}
+	end(source, refund) {
+		let shift = this.map.get(source);
+		shift && (this.map.delete(source), stands.remove(shift.stand), refund && shift.deposit > 0 && core$3.AddMoney(source, shift.account, shift.deposit, "hotdog:deposit"), isOnline(source) && this.send(source, null));
+	}
+	endAll() {
+		for (let source of this.map.keys()) this.end(source, !0);
+	}
+	levelOf(shift) {
+		let { levels } = hotdogSettings.value, index = levelOf(levels, shift.rep);
+		return {
+			index,
+			level: levels[index] ?? levels[0]
+		};
+	}
+	addRep(source, shift, gain) {
+		let rep = Math.min(hotdogSettings.value.maxRep, shift.rep + gain);
+		rep !== shift.rep && (shift.rep = rep, core$3.SetMeta(source, "rep", {
+			...record(core$3.GetMeta(source, "rep")),
+			hotdog: rep
+		}));
+	}
+	send(source, shift) {
+		let view = null;
+		if (shift) {
+			let { index, level } = this.levelOf(shift);
+			view = {
+				stand: shift.stand,
+				stock: { ...shift.stock },
+				max: level?.stock ?? 0,
+				level: index + 1,
+				rep: shift.rep
+			};
+		}
+		emitNet(HOTDOG_EVENTS.shift, source, view);
+	}
+	atStand(source, metres) {
+		let shift = this.map.get(source), stand = shift ? stands.get(shift.stand) : void 0;
+		return !shift || !stand ? "HOTDOG_ERR_NO_STAND" : stand.pusher ? "HOTDOG_ERR_PUSHING" : isNear(source, stand, metres) ? {
+			shift,
+			stand
+		} : "HOTDOG_ERR_FAR";
+	}
+}();
+onCharacter({ unloaded: (source) => shifts$1.end(source, !1) }), on("onResourceStop", (resource) => {
+	resource === ResourceName && shifts$1.endAll();
+});
+// resource/server/hotdogSales.ts
+const core$2 = resourceExport("ai-core"), CUSTOMER_COOLDOWN_MS = 6e5, customers = new KeyedCooldowns(), sales = new Cooldowns(), randomInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+function customerAt(source, netId) {
+	let at = shifts$1.atStand(source, 5);
+	if (typeof at == "string") return at;
+	let ped = pedFromNet(netId);
+	return !ped || IsPedAPlayer(ped) || distance(entityCoords(ped), at.stand) > 6 || !customers.ready(netId) ? "HOTDOG_ERR_CUSTOMER" : at;
+}
+onClientCallback(HOTDOG_EVENTS.offer, { args: oneArg(readId) }, (source, netId) => {
+	if (!sales.ready(source)) return fail("HOTDOG_ERR_CUSTOMER");
+	let at = customerAt(source, netId);
+	if (typeof at == "string") return fail(at);
+	let { shift } = at, have = QUALITIES.filter((q) => shift.stock[q] > 0), quality = have[Math.floor(Math.random() * have.length)];
+	if (!quality) return fail("HOTDOG_ERR_NO_DOGS");
+	let range = shifts$1.levelOf(shift).level?.prices[quality], count = randomInt(1, Math.min(3, shift.stock[quality])), price = range ? randomInt(range.min, range.max) : 1;
+	return shift.offer = {
+		netId,
+		quality,
+		count,
+		price,
+		until: GetGameTimer() + 6e4
 	}, {
-		id: "stops",
-		file: "stops",
-		icon: "location-dot",
-		label: "ADMIN_TAB_STOPS",
-		desc: "ADMIN_TAB_STOPS_DESC",
-		listSub: "route",
-		createLabel: "ADMIN_NEW_STOP",
-		deleteLabel: "ADMIN_DELETE_STOP",
-		cards: [{
-			icon: "location-dot",
-			title: "ADMIN_C_STOP",
-			desc: "ADMIN_C_STOP_DESC",
-			fields: [
-				{
-					widget: "text",
-					path: "route",
-					label: "ADMIN_F_ROUTE",
-					hint: "ADMIN_H_ROUTE",
-					placeholder: "ADMIN_P_ROUTE"
-				},
-				{
-					widget: "text",
-					path: "label",
-					suggest: { from: "coords" },
-					label: "ADMIN_F_STOP_LABEL",
-					placeholder: "ADMIN_P_STOP_LABEL"
-				},
-				{
-					widget: "point",
-					path: "coords",
-					label: "ADMIN_F_COORDS",
-					hint: "ADMIN_H_COORDS",
-					ground: !0
-				}
-			]
-		}]
-	}]
-}, core = resourceExport("ai-core"), panel = new AdminPanel(jobsSchema), routes = panel.view("routes", readRoutes), stops = panel.view("stops", readStops);
-aiLogChannels({ work: { active: !1 } });
+		ok: !0,
+		count,
+		price: count * price
+	};
+}), onClientCallback(HOTDOG_EVENTS.sell, {
+	args: oneArg(readId),
+	lock: !0
+}, (source, netId) => {
+	let at = customerAt(source, netId);
+	if (typeof at == "string") return fail(at);
+	let { shift } = at, offer = shift.offer;
+	if (shift.offer = null, !offer || offer.netId !== netId || GetGameTimer() > offer.until) return fail("HOTDOG_ERR_CUSTOMER");
+	if (shift.stock[offer.quality] < offer.count) return fail("HOTDOG_ERR_NO_DOGS");
+	shift.stock[offer.quality] -= offer.count, customers.start(netId, CUSTOMER_COOLDOWN_MS), sales.start(source, 3e3);
+	let total = offer.count * offer.price;
+	return core$2.AddMoney(source, hotdogSettings.value.payAccount, total, "hotdog:sale"), shifts$1.send(source, shift), notify(source, Locale("HOTDOG_SOLD", offer.count, total), "success"), aiLog("hotdog", `sold ${offer.count} hot dogs for $${total}`, {
+		source,
+		metadata: {
+			quality: offer.quality,
+			count: offer.count,
+			total
+		}
+	}), { ok: !0 };
+}), onClientEvent(HOTDOG_EVENTS.decline, (source) => {
+	let shift = shifts$1.get(source);
+	shift?.offer && (customers.start(shift.offer.netId, CUSTOMER_COOLDOWN_MS), shift.offer = null);
+});
+// resource/server/hotdog.ts
+const core$1 = resourceExport("ai-core"), QUALITY_TEXT = {
+	exotic: "HOTDOG_Q_EXOTIC",
+	rare: "HOTDOG_Q_RARE",
+	common: "HOTDOG_Q_COMMON"
+};
+onClientCallback(HOTDOG_EVENTS.start, (source) => {
+	let s = hotdogSettings.value;
+	return s.enabled ? shifts$1.get(source) ? fail("HOTDOG_ERR_WORKING") : isNear(source, s.coords, 4) ? online.allows(source, s.access) ? s.deposit > 0 && !core$1.RemoveMoney(source, s.depositAccount, s.deposit, "hotdog:deposit") ? fail("HOTDOG_ERR_MONEY") : (shifts$1.start(source, s.deposit, s.depositAccount), s.deposit > 0 && notify(source, Locale("HOTDOG_DEPOSIT_PAID", s.deposit), "success"), { ok: !0 }) : fail("HOTDOG_ERR_JOB") : fail("HOTDOG_ERR_FAR") : fail("HOTDOG_ERR_OFF");
+}, { lock: !0 }), onClientCallback(HOTDOG_EVENTS.stop, (source) => {
+	let shift = shifts$1.get(source);
+	return shift ? isNear(source, hotdogSettings.value.coords, 4) ? (shifts$1.end(source, !0), shift.deposit > 0 && notify(source, Locale("HOTDOG_DEPOSIT_BACK", shift.deposit), "success"), { ok: !0 }) : fail("HOTDOG_ERR_FAR") : fail("HOTDOG_ERR_NO_STAND");
+}, { lock: !0 }), onClientCallback(HOTDOG_EVENTS.grab, (source) => {
+	let at = shifts$1.atStand(source, 3);
+	return typeof at == "string" ? fail(at) : (at.shift.offer = null, stands.update(at.stand.id, { pusher: source }), { ok: !0 });
+}), onClientCallback(HOTDOG_EVENTS.release, { args: ([x, y, z, h]) => {
+	let a = readFinite(x), b = readFinite(y), c = readFinite(z), d = readFinite(h);
+	return a === null || b === null || c === null || d === null ? null : [
+		a,
+		b,
+		c,
+		d
+	];
+} }, (source, x, y, z, heading) => {
+	let shift = shifts$1.get(source), stand = shift ? stands.get(shift.stand) : void 0;
+	if (!shift || !stand || stand.pusher !== source) return fail("HOTDOG_ERR_NO_STAND");
+	let ped = coordsOf(source), at = distance(ped, {
+		x,
+		y,
+		z
+	}) <= 4 ? {
+		x,
+		y,
+		z
+	} : ped;
+	return stands.update(stand.id, {
+		...at,
+		heading,
+		pusher: 0
+	}), { ok: !0 };
+});
+async function cook(source) {
+	let misses = 0;
+	for (let i = 0; i < hotdogSettings.value.checks; i++) await minigameFor(source, {
+		game: "skillCheck",
+		difficulty: "easy",
+		rounds: 1,
+		keys: [
+			"w",
+			"a",
+			"s",
+			"d"
+		]
+	}) !== "won" && misses++;
+	return misses;
+}
+onClientCallback(HOTDOG_EVENTS.prepare, async (source) => {
+	let at = shifts$1.atStand(source, 3);
+	if (typeof at == "string") return fail(at);
+	let { shift } = at;
+	emitNet(HOTDOG_EVENTS.cooking, source, !0);
+	let misses = await cook(source);
+	if (!isOnline(source) || (emitNet(HOTDOG_EVENTS.cooking, source, !1), shifts$1.get(source) !== shift)) return { ok: !0 };
+	let quality = misses === 0 ? "exotic" : misses === 1 ? "rare" : "common", label = Locale(QUALITY_TEXT[quality]), { index, level } = shifts$1.levelOf(shift), max = level?.stock ?? 0;
+	if (shift.stock[quality] + 1 > max) return notify(source, Locale("HOTDOG_NO_MORE", label), "error"), { ok: !0 };
+	let made = index > 0 && Math.random() < .5 ? randomInt(1, index + 1) : 1;
+	return shift.stock[quality] = Math.min(max, shift.stock[quality] + made), shifts$1.addRep(source, shift, hotdogSettings.value.repGain[quality]), shifts$1.send(source, shift), notify(source, made > 1 ? Locale("HOTDOG_MADE_LUCKY", made, label) : Locale("HOTDOG_MADE", label), "success"), { ok: !0 };
+}, { lock: !0 });
+// resource/server/index.ts
+const core = resourceExport("ai-core"), routes = panel.records("routes", readRoute), stops = new class {
+	byRoute = new Map();
+	sorted = new Map();
+	add(stop) {
+		let map = this.byRoute.get(stop.route);
+		return map || this.byRoute.set(stop.route, map = new Map()), map.set(stop.id, stop), this.sorted.delete(stop.route), () => {
+			map.delete(stop.id), map.size === 0 && this.byRoute.delete(stop.route), this.sorted.delete(stop.route);
+		};
+	}
+	of(route) {
+		let list = this.sorted.get(route);
+		return list || (list = [...this.byRoute.get(route)?.values() ?? []].sort((a, b) => a.id.localeCompare(b.id, "en", { numeric: !0 })), this.sorted.set(route, list)), list;
+	}
+}();
+new RecordObjects(panel, "stops", readStop, (_id, stop) => stops.add(stop)), aiLogChannels({
+	work: { active: !1 },
+	hotdog: { active: !1 }
+});
 const readTextId = oneArg((v) => readText(v, 64));
 async function spawnTowed(route, stop) {
 	return await spawnVehicle({
@@ -1798,7 +2949,7 @@ const depotStop = (route) => ({
 	...route.depot
 }), shifts = new PlayerMap({ onDrop: (_source, work) => removeEntities(work) });
 function nextStop(route, work) {
-	let list = stops.value.filter((s) => s.route === route.id);
+	let list = stops.of(route.id);
 	if (list.length === 0) return null;
 	if (route.kind === "ordered") {
 		let index = work ? (work.index + 1) % list.length : 0, stop = list[index];
@@ -1831,11 +2982,11 @@ onClientCallback(EVENTS.start, {
 	args: readTextId,
 	lock: !0
 }, async (source, id) => {
-	let route = routes.value.get(id);
+	let route = routes.get(id);
 	if (!route) return fail("JOBS_ERR_GONE");
 	if (shifts.has(source)) return fail("JOBS_ERR_WORKING");
 	if (!isNear(source, route.depot, 4)) return fail("JOBS_ERR_FAR");
-	if (route.job && !online.jobs(source).includes(route.job)) return fail("JOBS_ERR_JOB");
+	if (!online.allows(source, route.access)) return fail("JOBS_ERR_JOB");
 	let first = nextStop(route, null);
 	if (!first) return fail("JOBS_ERR_NO_STOPS");
 	let vehicle = null;

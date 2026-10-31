@@ -76,11 +76,25 @@
             "tow"
           ]
         },
-        "job": {
-          "description": "Needed job: Empty: anyone can work here.",
-          "type": "string",
-          "minLength": 0,
-          "maxLength": 32
+        "jobs": {
+          "description": "Jobs: Only members of these jobs can use it. Leave jobs and gangs empty for everyone.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "gangs": {
+          "description": "Gangs: Members of these gangs can use it too.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "onDuty": {
+          "description": "Only on duty: Job members must be on duty in that job.",
+          "type": "boolean"
         },
         "depot": {
           "description": "Depot: Where players start and stop working.",
@@ -215,7 +229,6 @@
       "required": [
         "label",
         "kind",
-        "job",
         "depot",
         "vehicle",
         "spawn",

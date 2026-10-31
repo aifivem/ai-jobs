@@ -1,0 +1,75 @@
+{
+  "$schema": "./schemas/hotdog.schema.json",
+  "enabled": true,
+  "jobs": [],
+  "gangs": [],
+  "coords": {
+    "x": 39.31,
+    "y": -1005.54,
+    "z": 29.48
+  },
+  "blip": {
+    "sprite": 542,
+    "color": 17,
+    "scale": 0.6
+  },
+  "spawn": {
+    "x": 38.15,
+    "y": -1001.65,
+    "z": 29.44,
+    "heading": 252.5
+  },
+  "model": "prop_hotdogstand_01",
+  "deposit": 250,
+  "depositAccount": "bank",
+  "payAccount": "cash",
+  "checks": 3,
+  "repGain": {
+    "exotic": 3,
+    "rare": 2,
+    "common": 1
+  },
+  "maxRep": 200,
+  "levels": [
+    {
+      "rep": 0,
+      "stock": 15,
+      "exoticMin": 8,
+      "exoticMax": 12,
+      "rareMin": 6,
+      "rareMax": 9,
+      "commonMin": 4,
+      "commonMax": 6
+    },
+    {
+      "rep": 50,
+      "stock": 30,
+      "exoticMin": 9,
+      "exoticMax": 13,
+      "rareMin": 7,
+      "rareMax": 10,
+      "commonMin": 5,
+      "commonMax": 7
+    },
+    {
+      "rep": 100,
+      "stock": 45,
+      "exoticMin": 10,
+      "exoticMax": 14,
+      "rareMin": 8,
+      "rareMax": 11,
+      "commonMin": 6,
+      "commonMax": 9
+    },
+    {
+      "rep": 200,
+      "stock": 60,
+      "exoticMin": 11,
+      "exoticMax": 15,
+      "rareMin": 9,
+      "rareMax": 12,
+      "commonMin": 7,
+      "commonMax": 9
+    }
+  ]
+}

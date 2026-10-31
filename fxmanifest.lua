@@ -21,4 +21,5 @@ files {
 	'locales/*.json',
 	'data/routes.json',
 	'data/stops.json',
+	'data/hotdog.json',
 }

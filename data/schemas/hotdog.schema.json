@@ -1,0 +1,303 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai-jobs/data/hotdog.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's JSON Schema (for editors)."
+    },
+    "enabled": {
+      "description": "Open: Off hides the counter; running stands keep working until given back.",
+      "type": "boolean"
+    },
+    "jobs": {
+      "description": "Jobs: Only members of these jobs can use it. Leave jobs and gangs empty for everyone.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "gangs": {
+      "description": "Gangs: Members of these gangs can use it too.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "onDuty": {
+      "description": "Only on duty: Job members must be on duty in that job.",
+      "type": "boolean"
+    },
+    "coords": {
+      "description": "Counter: Stand where players rent the stand and use your position.",
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      }
+    },
+    "ped": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "description": "Model: The ped model; empty means no NPC. Players see it within 50 m.",
+          "type": "string",
+          "maxLength": 64
+        },
+        "scenario": {
+          "description": "What it does: An idle animation the NPC plays on the spot.",
+          "enum": [
+            "",
+            "WORLD_HUMAN_STAND_IMPATIENT",
+            "WORLD_HUMAN_CLIPBOARD",
+            "WORLD_HUMAN_STAND_MOBILE",
+            "WORLD_HUMAN_AA_COFFEE",
+            "WORLD_HUMAN_SMOKING",
+            "WORLD_HUMAN_GUARD_STAND",
+            "WORLD_HUMAN_COP_IDLES",
+            "WORLD_HUMAN_HANG_OUT_STREET"
+          ]
+        },
+        "coords": {
+          "description": "Where it stands: The NPC's floor spot and the way it faces (scroll in the free camera); without one it stands on the place's point.",
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "z",
+            "heading"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            },
+            "heading": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "required": []
+    },
+    "blip": {
+      "description": "Map blip",
+      "type": "object",
+      "properties": {
+        "sprite": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "color": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0.3,
+          "maximum": 2
+        }
+      },
+      "required": [
+        "sprite",
+        "color",
+        "scale"
+      ]
+    },
+    "spawn": {
+      "description": "Stand spawn: Where a rented stand appears, facing the way the stand's counter should look.",
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "z",
+        "heading"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "heading": {
+          "type": "number"
+        }
+      }
+    },
+    "model": {
+      "description": "Stand model",
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 64
+    },
+    "deposit": {
+      "description": "Deposit: Taken when the stand is rented, returned when it is given back at the counter (lost on logout).",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "depositAccount": {
+      "description": "Deposit account: The account the deposit is taken from and returned to.",
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 32,
+      "pattern": "^[a-z0-9_]{2,32}$"
+    },
+    "payAccount": {
+      "description": "Sales paid into: The account a customer's money goes to.",
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 32,
+      "pattern": "^[a-z0-9_]{2,32}$"
+    },
+    "checks": {
+      "description": "Skill checks: Skill checks per hot dog.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "repGain": {
+      "type": "object",
+      "properties": {
+        "exotic": {
+          "description": "Reputation per perfect: Reputation a perfect hot dog gives.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "rare": {
+          "description": "Reputation per rare: Reputation a rare hot dog gives.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "common": {
+          "description": "Reputation per common: Reputation a common hot dog gives.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "exotic",
+        "rare",
+        "common"
+      ]
+    },
+    "maxRep": {
+      "description": "Highest reputation: Reputation stops growing here.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "levels": {
+      "description": "Levels",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "properties": {
+          "rep": {
+            "description": "From reputation",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "stock": {
+            "description": "Hot dogs per quality",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "exoticMin": {
+            "description": "Perfect from",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "exoticMax": {
+            "description": "Perfect to",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "rareMin": {
+            "description": "Rare from",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "rareMax": {
+            "description": "Rare to",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "commonMin": {
+            "description": "Common from",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "commonMax": {
+            "description": "Common to",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "rep",
+          "stock",
+          "exoticMin",
+          "exoticMax",
+          "rareMin",
+          "rareMax",
+          "commonMin",
+          "commonMax"
+        ]
+      }
+    }
+  },
+  "required": [
+    "enabled",
+    "coords",
+    "blip",
+    "spawn",
+    "model",
+    "deposit",
+    "depositAccount",
+    "payAccount",
+    "checks",
+    "repGain",
+    "maxRep",
+    "levels"
+  ]
+}
