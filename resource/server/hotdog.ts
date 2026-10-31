@@ -95,6 +95,9 @@ onClientCallback(
   },
 );
 
+/** Fastest real play of one easy skill check stage (its green arc starts at 100 degrees, 216 deg/s). */
+const COOK_MIN_MS = 400;
+
 /** Skill checks on the worker's client; fewer misses make a better hot dog (qb-hotdogjob's faults). */
 async function cook(source: number): Promise<number> {
   let misses = 0;
@@ -104,6 +107,7 @@ async function cook(source: number): Promise<number> {
       difficulty: "easy",
       rounds: 1,
       keys: ["w", "a", "s", "d"],
+      minMs: COOK_MIN_MS,
     });
     if (outcome !== "won") misses++;
   }
