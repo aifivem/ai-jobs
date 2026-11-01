@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/aifivem/ai-jobs/compare/v0.1.2...v0.1.3) (2026-11-01)
+
+
+### Bug Fixes
+
+* **jobs:** register the hot dog sale callbacks the client calls ([9b15925](https://github.com/aifivem/ai-jobs/commit/9b15925d4629ab698fe0796b0a1d56aebf42d145))
+
+
+### Code Refactoring
+
+* feature folders, side entries that only import, panel schema per tab ([a1d12a9](https://github.com/aifivem/ai-jobs/commit/a1d12a94348a64f67de1e0c59b5fe43561cf58f7))
+
 ## [0.1.2](https://github.com/aifivem/ai-jobs/compare/v0.1.1...v0.1.2) (2026-10-31)
 
 
