@@ -1,6 +1,6 @@
 {
   "name": "ai-jobs",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Work routes: taxi, bus, trucker, garbage, recycling, vineyard, diving",
   "license": "GPL-3.0-only",
