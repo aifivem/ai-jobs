@@ -1,11 +1,14 @@
 import {
   coordsOf,
+  every,
   isNear,
   isOnline,
   minigameFor,
   notify,
+  onCharacter,
   onClientCallback,
   online,
+  onStop,
   resourceExport,
 } from "@aicore-fivem/lib/server";
 import {
@@ -17,12 +20,22 @@ import {
 } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
 import { HOTDOG_EVENTS, type Quality } from "common/hotdog";
-import { hotdogSettings as settings, shifts } from "./hotdogShifts";
-import { stands } from "./hotdogStands";
+import { hotdogSettings as settings, shifts } from "./shifts";
+import { FOLLOW_MS, stands } from "./stands";
 
-/** The hot dog stand (qb-hotdogjob): rent at the counter, push it, cook in skill checks; selling in `hotdogSales`. */
+/** The hot dog stand (qb-hotdogjob): rent at the counter, push it, cook in skill checks; selling in `sales.ts`. */
 
 const core = resourceExport("ai-core");
+
+every(FOLLOW_MS, () => stands.follow(), { name: "hotdogFollow" });
+onCharacter({
+  loaded: (source) => stands.start(source),
+  unloaded: (source) => stands.stop(source),
+});
+// A character switch ends the shift without the deposit (QB: the stand is gone).
+onCharacter({ unloaded: (source) => shifts.end(source, false) });
+// A restart gives every deposit back: the stands go with the resource.
+onStop(() => shifts.endAll());
 
 const QUALITY_TEXT = {
   exotic: "HOTDOG_Q_EXOTIC",

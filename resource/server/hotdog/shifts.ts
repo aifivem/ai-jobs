@@ -1,8 +1,6 @@
 import {
   isNear,
   isOnline,
-  onCharacter,
-  onStop,
   PlayerMap,
   resourceExport,
 } from "@aicore-fivem/lib/server";
@@ -15,8 +13,8 @@ import {
   type Quality,
   type StandView,
 } from "common/hotdog";
-import { panel } from "./content";
-import { stands } from "./hotdogStands";
+import { panel } from "../content";
+import { stands } from "./stands";
 
 const core = resourceExport("ai-core");
 
@@ -131,7 +129,3 @@ class HotdogShifts {
 }
 
 export const shifts = new HotdogShifts();
-// A character switch ends the shift without the deposit (QB: the stand is gone).
-onCharacter({ unloaded: (source) => shifts.end(source, false) });
-// A restart gives every deposit back: the stands go with the resource.
-onStop(() => shifts.endAll());

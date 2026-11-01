@@ -19,7 +19,7 @@ import {
 } from "@aicore-fivem/lib/shared";
 import { Locale } from "common";
 import { HOTDOG_EVENTS, QUALITIES } from "common/hotdog";
-import { hotdogSettings as settings, shifts } from "./hotdogShifts";
+import { hotdogSettings as settings, shifts } from "./shifts";
 
 /** Selling at the stand: the worker's client brings an NPC over, the server makes the offer and takes the sale. */
 

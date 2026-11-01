@@ -1,14 +1,9 @@
-import {
-  AreaStream,
-  coordsOf,
-  every,
-  onCharacter,
-} from "@aicore-fivem/lib/server";
+import { AreaStream, coordsOf } from "@aicore-fivem/lib/server";
 import { distance, type Vec3 } from "@aicore-fivem/lib/shared";
 import { HOTDOG_EVENTS, type StandView } from "common/hotdog";
 
 /** How often pushed stands follow their pusher on the server and followers' cells are read. */
-const FOLLOW_MS = 2000;
+export const FOLLOW_MS = 2000;
 /** A pushed stand's server position moves once the pusher is this far from it. */
 const MOVE_METRES = 8;
 
@@ -74,8 +69,3 @@ class Stands {
 }
 
 export const stands = new Stands();
-every(FOLLOW_MS, () => stands.follow(), { name: "hotdogFollow" });
-onCharacter({
-  loaded: (source) => stands.start(source),
-  unloaded: (source) => stands.stop(source),
-});

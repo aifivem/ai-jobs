@@ -1,11 +1,6 @@
-import {
-  onServerEvent,
-  onStop,
-  playerPed,
-  requestModel,
-} from "@aicore-fivem/lib/client";
-import { HOTDOG_EVENTS, toStandView, type StandView } from "common/hotdog";
-import { hotdog } from "./content";
+import { playerPed, requestModel } from "@aicore-fivem/lib/client";
+import type { StandView } from "common/hotdog";
+import { hotdog } from "../content";
 
 /** Where a pushed stand hangs on the pusher (qb-hotdogjob's offsets on bone 28422). */
 const PUSH_BONE = 28422;
@@ -121,18 +116,3 @@ class Stands {
 }
 
 export const stands = new Stands();
-onServerEvent(
-  HOTDOG_EVENTS.stands,
-  {
-    args: ([reset, puts, removes]) =>
-      [
-        reset === true,
-        Array.isArray(puts) ? puts.flatMap((v) => toStandView(v) ?? []) : [],
-        Array.isArray(removes)
-          ? removes.filter((id): id is number => typeof id === "number")
-          : [],
-      ] as const,
-  },
-  (reset, puts, removes) => stands.apply(reset, puts, removes),
-);
-onStop(() => stands.clear());

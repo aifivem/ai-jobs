@@ -2,21 +2,17 @@ import {
   allows,
   cache,
   callAction,
-  Keybind,
   menu,
   notify,
-  onMembershipChange,
-  onServerEvent,
-  onStop,
   player,
   Points,
 } from "@aicore-fivem/lib/client";
 import { Locale } from "common";
-import { HOTDOG_EVENTS, toHotdogView, type HotdogView } from "common/hotdog";
-import { hotdog, world } from "./content";
-import { Customers } from "./hotdogCustomers";
-import { Cook, Pusher } from "./hotdogPush";
-import { stands } from "./hotdogStands";
+import { HOTDOG_EVENTS, type HotdogView } from "common/hotdog";
+import { hotdog } from "../content";
+import { Customers } from "./customers";
+import { Cook, Pusher } from "./push";
+import { stands } from "./stands";
 
 /**
  * The worker's side of the hot dog stand: the counter (rent / give back), one point on the own stand (a menu: push,
@@ -180,27 +176,4 @@ class HotdogWork {
   }
 }
 
-const work = new HotdogWork();
-work.rebuildCounter();
-world.onChange("hotdog", () => work.rebuildCounter());
-onMembershipChange(() => work.rebuildCounter());
-stands.onChange((_view, id) => {
-  if (id === work.standId()) work.standChanged();
-});
-new Keybind({
-  name: "jobs_hotdog_release",
-  description: Locale("HOTDOG_KEYBIND_RELEASE"),
-  defaultKey: "G",
-  onPressed: () => void work.release(),
-});
-onServerEvent(
-  HOTDOG_EVENTS.shift,
-  { args: ([raw]) => [raw == null ? null : toHotdogView(raw)] as const },
-  (shift) => work.setShift(shift),
-);
-onServerEvent(
-  HOTDOG_EVENTS.cooking,
-  { args: ([on]) => [on === true] as const },
-  (on) => void work.cook.set(on),
-);
-onStop(() => work.stop());
+export const work = new HotdogWork();
