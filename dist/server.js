@@ -71,6 +71,10 @@ function vec4(value, fallback) {
 function readFinite(value) {
 	return typeof value == "number" && Number.isFinite(value) ? value : null;
 }
+function readInt(value, min, max) {
+	return Number.isInteger(value) && value >= min && value <= max ? value : null;
+}
+const readId = (value) => readInt(value, 1, 2147483647);
 function readText(value, max) {
 	if (typeof value != "string") return null;
 	let text = value.trim();
@@ -693,7 +697,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$29 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$30 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -707,7 +711,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$29.GetLookupValues(source);
+			list = core$30.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -973,7 +977,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panelFiles.ts
-const core$28 = resourceExport(CORE.resource);
+const core$29 = resourceExport(CORE.resource);
 var PanelFiles = class {
 	schema;
 	data = new Map();
@@ -1017,7 +1021,7 @@ var PanelFiles = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$28.AdminPanelChanged({
+		if (core$29.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -1039,7 +1043,7 @@ var PanelFiles = class {
 	}
 };
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$27 = resourceExport(CORE.resource);
+const core$28 = resourceExport(CORE.resource);
 var AdminPanel = class extends PanelFiles {
 	rules = new Map();
 	actions = new Map();
@@ -1048,7 +1052,7 @@ var AdminPanel = class extends PanelFiles {
 		super(schema), registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelData", () => this.dataSnapshot()), registerExport("AdminPanelSummary", () => this.summary()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
 			count: 4,
 			windowMs: 1e4
-		} }), setImmediate(() => core$27.RegisterAdminPanel(this.resource));
+		} }), setImmediate(() => core$28.RegisterAdminPanel(this.resource));
 	}
 	rule(file, rule) {
 		this.rules.set(file, rule);
@@ -1160,24 +1164,24 @@ function notify(source, text, kind = "info", duration, title) {
 	emitNet(LIB_UI.notifyEvent, source, notification);
 }
 // ../../../packages/lib/src/server/inventory.ts
-const core$26 = resourceExport(CORE.resource), inventory = {
-	addItem: (inv, item, count = 1, metadata, slot) => core$26.AddItem(inv, item, count, metadata, slot),
-	removeItem: (inv, item, count = 1, metadata, slot) => core$26.RemoveItem(inv, item, count, metadata, slot),
-	getItemCount: (inv, item, metadata) => core$26.GetItemCount(inv, item, metadata),
-	hasItem: (inv, item, count = 1) => core$26.HasItem(inv, item, count),
-	canCarryItem: (inv, item, count = 1, metadata) => core$26.CanCarryItem(inv, item, count, metadata),
-	getItems: (inv) => core$26.GetItems(inv),
-	clearInventory: (inv) => core$26.ClearInventory(inv),
-	registerStash: (name, label, slots, maxWeight, jobs = []) => core$26.RegisterStash(name, label, slots, maxWeight, jobs),
-	openInventory: (source, inv) => core$26.OpenInventory(source, inv),
-	registerUsableItem: (name, handler) => core$26.RegisterUsableItem(name, handler),
-	registerShop: (name, label, items) => core$26.RegisterShop(name, label, items),
-	openShop: (source, name) => core$26.OpenShop(source, name),
-	getItemDefinition: (name) => core$26.GetItemDefinition(name),
-	setItemMetadata: (inv, slot, metadata) => core$26.SetItemMetadata(inv, slot, metadata),
-	setMaxWeight: (source, grams) => core$26.SetMaxWeight(source, grams),
-	usableItems: () => core$26.GetUsableItems()
-}, core$25 = resourceExport(CORE.resource);
+const core$27 = resourceExport(CORE.resource), inventory = {
+	addItem: (inv, item, count = 1, metadata, slot) => core$27.AddItem(inv, item, count, metadata, slot),
+	removeItem: (inv, item, count = 1, metadata, slot) => core$27.RemoveItem(inv, item, count, metadata, slot),
+	getItemCount: (inv, item, metadata) => core$27.GetItemCount(inv, item, metadata),
+	hasItem: (inv, item, count = 1) => core$27.HasItem(inv, item, count),
+	canCarryItem: (inv, item, count = 1, metadata) => core$27.CanCarryItem(inv, item, count, metadata),
+	getItems: (inv) => core$27.GetItems(inv),
+	clearInventory: (inv) => core$27.ClearInventory(inv),
+	registerStash: (name, label, slots, maxWeight, jobs = []) => core$27.RegisterStash(name, label, slots, maxWeight, jobs),
+	openInventory: (source, inv) => core$27.OpenInventory(source, inv),
+	registerUsableItem: (name, handler) => core$27.RegisterUsableItem(name, handler),
+	registerShop: (name, label, items) => core$27.RegisterShop(name, label, items),
+	openShop: (source, name) => core$27.OpenShop(source, name),
+	getItemDefinition: (name) => core$27.GetItemDefinition(name),
+	setItemMetadata: (inv, slot, metadata) => core$27.SetItemMetadata(inv, slot, metadata),
+	setMaxWeight: (source, grams) => core$27.SetMaxWeight(source, grams),
+	usableItems: () => core$27.GetUsableItems()
+}, core$26 = resourceExport(CORE.resource);
 function reindex(index, source, before, after) {
 	for (let name of before) {
 		let set = index.get(name);
@@ -1205,11 +1209,11 @@ var OnlineMirror = class {
 				gangs: [],
 				gangNames: [],
 				duty: null
-			}), this.setJobs(source, core$25.GetJobs(source) ?? []), this.setGangs(source, core$25.GetGangs(source) ?? []), this.setDuty(source, core$25.GetDutyJob(source));
+			}), this.setJobs(source, core$26.GetJobs(source) ?? []), this.setGangs(source, core$26.GetGangs(source) ?? []), this.setDuty(source, core$26.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => this.setJobs(source, jobs)), on(CORE.gangsChangedEvent, (source, gangs) => this.setGangs(source, gangs)), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$25.GetLoadedSources()) {
-			let character = core$25.GetCharacter(source);
+		for (let source of core$26.GetLoadedSources()) {
+			let character = core$26.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -1306,10 +1310,10 @@ var OnlineMirror = class {
 		return this.start(), this.onDuty.get(job) ?? EMPTY;
 	}
 };
-const EMPTY = new Set(), online = new OnlinePlayers(), core$24 = resourceExport(CORE.resource), vehicleKeys = {
-	give: (source, vehicle, purpose = "temporary") => core$24.GiveVehicleKeys(source, vehicle, purpose),
-	remove: (source, vehicle) => core$24.RemoveVehicleKeys(source, vehicle),
-	has: (source, vehicle) => core$24.HasVehicleKeys(source, vehicle)
+const EMPTY = new Set(), online = new OnlinePlayers(), core$25 = resourceExport(CORE.resource), vehicleKeys = {
+	give: (source, vehicle, purpose = "temporary") => core$25.GiveVehicleKeys(source, vehicle, purpose),
+	remove: (source, vehicle) => core$25.RemoveVehicleKeys(source, vehicle),
+	has: (source, vehicle) => core$25.HasVehicleKeys(source, vehicle)
 }, TYPES = new Set([
 	"automobile",
 	"bike",
@@ -1329,10 +1333,10 @@ async function vehicleType(model, asker) {
 	return first !== void 0 && first !== asker ? (types.set(hash, answer), votes.delete(hash)) : (seen.set(answer, asker), votes.set(hash, seen)), answer;
 }
 // ../../../packages/lib/src/server/fuel.ts
-const core$23 = resourceExport(CORE.resource), fuel = {
-	get: (vehicle) => core$23.GetVehicleFuel(vehicle),
-	set: (vehicle, level) => core$23.SetVehicleFuel(vehicle, level),
-	provider: () => core$23.GetFuelSystem()
+const core$24 = resourceExport(CORE.resource), fuel = {
+	get: (vehicle) => core$24.GetVehicleFuel(vehicle),
+	set: (vehicle, level) => core$24.SetVehicleFuel(vehicle, level),
+	provider: () => core$24.GetFuelSystem()
 };
 function randomPlate(prefix) {
 	let digit = () => String(Math.floor(Math.random() * 10));
@@ -1374,6 +1378,13 @@ async function spawnVehicle(options) {
 	}], ...options.seats ?? []];
 	return await Promise.all(riders.map((r) => seatPlayer(vehicle, r.source, r.seat))), vehicle;
 }
+// ../../../packages/lib/src/server/netEntity.ts
+function entityFromNet(netId, type) {
+	if (readId(netId) === null) return 0;
+	let entity = NetworkGetEntityFromNetworkId(netId);
+	return !entity || !DoesEntityExist(entity) ? 0 : type === void 0 || GetEntityType(entity) === type ? entity : 0;
+}
+const pedFromNet = (netId) => entityFromNet(netId, 1);
 resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/players.ts
 const log$4 = createLogger(GetCurrentResourceName()), dropped = new Set();
@@ -1391,6 +1402,52 @@ var PlayerMap = class extends Map {
 			let value = this.get(source);
 			this.delete(source), options.onDrop?.(source, value);
 		});
+	}
+}, Cooldowns = class {
+	until = new PlayerMap();
+	ready(source) {
+		return this.left(source) === 0;
+	}
+	start(source, ms) {
+		this.until.set(source, GetGameTimer() + ms);
+	}
+	take(source, ms) {
+		return this.ready(source) ? (this.start(source, ms), !0) : !1;
+	}
+	left(source) {
+		let until = this.until.get(source);
+		if (until === void 0) return 0;
+		let left = until - GetGameTimer();
+		return left > 0 ? left : (this.until.delete(source), 0);
+	}
+	clear(source) {
+		this.until.delete(source);
+	}
+}, KeyedCooldowns = class {
+	until = new Map();
+	sweepAt = 64;
+	ready(key) {
+		return this.left(key) === 0;
+	}
+	start(key, ms) {
+		ms <= 0 ? this.until.delete(key) : (this.until.size >= this.sweepAt && this.sweep(), this.until.set(key, GetGameTimer() + ms));
+	}
+	take(key, ms) {
+		return this.ready(key) ? (this.start(key, ms), !0) : !1;
+	}
+	left(key) {
+		let until = this.until.get(key);
+		if (until === void 0) return 0;
+		let left = until - GetGameTimer();
+		return left > 0 ? left : (this.until.delete(key), 0);
+	}
+	clear(key) {
+		this.until.delete(key);
+	}
+	sweep() {
+		let now = GetGameTimer();
+		for (let [key, until] of this.until) until <= now && this.until.delete(key);
+		this.sweepAt = Math.max(64, this.until.size * 2);
 	}
 };
 function onCharacter(handlers) {
@@ -1635,7 +1692,7 @@ function progressFor(source, options) {
 	});
 }
 // ../../../packages/lib/src/server/definitions.ts
-const core$21 = resourceExport("ai-core");
+const core$22 = resourceExport("ai-core");
 new class {
 	jobs = new Map();
 	gangs = new Map();
@@ -1646,23 +1703,23 @@ new class {
 	}
 	job(name) {
 		let def = this.jobs.get(name);
-		return def === void 0 && this.jobs.set(name, def = core$21.GetJobDefinition(name) ?? null), def;
+		return def === void 0 && this.jobs.set(name, def = core$22.GetJobDefinition(name) ?? null), def;
 	}
 	registerJob(name, definition) {
-		return core$21.RegisterJobDefinition(name, definition);
+		return core$22.RegisterJobDefinition(name, definition);
 	}
 	removeJob(name) {
-		return core$21.RemoveJobDefinition(name);
+		return core$22.RemoveJobDefinition(name);
 	}
 	registerGang(name, definition) {
-		return core$21.RegisterGangDefinition(name, definition);
+		return core$22.RegisterGangDefinition(name, definition);
 	}
 	removeGang(name) {
-		return core$21.RemoveGangDefinition(name);
+		return core$22.RemoveGangDefinition(name);
 	}
 	gang(name) {
 		let def = this.gangs.get(name);
-		return def === void 0 && this.gangs.set(name, def = core$21.GetGangDefinition(name) ?? null), def;
+		return def === void 0 && this.gangs.set(name, def = core$22.GetGangDefinition(name) ?? null), def;
 	}
 }();
 async function minigameFor(source, options) {
@@ -1706,7 +1763,17 @@ new class {
 			if (name === resource) for (let command of this.list) for (let n of command.info.names) emitNet("chat:removeSuggestion", -1, `/${n}`);
 		});
 	}
-}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib");
+}();
+// ../../../packages/lib/src/server/netEvent.ts
+const log$2 = createLogger(GetCurrentResourceName());
+function onClientEvent(name, first, second) {
+	let [handler, options] = typeof first == "function" ? [first, second ?? {}] : [second, first], gate = new ClientGate(name, options, 10);
+	onNet(name, (...raw) => {
+		let source = Number(globalThis.source), args = gate.check(source, raw);
+		args && gate.run(source, void 0, () => handler(source, ...args)).catch((error) => log$2.error(`event ${name} failed for ${source}`, error));
+	});
+}
+createLogger("aicore-lib");
 // ../../../packages/lib/src/fivem/byResource.ts
 const stopHandlers = [];
 let listening = !1;
@@ -2571,7 +2638,11 @@ const HOTDOG_EVENTS = {
 	stands: "ai-jobs:client:hotdogStands",
 	shift: "ai-jobs:client:hotdogShift",
 	cooking: "ai-jobs:client:hotdogCooking"
-}, QB_LEVELS = [
+}, QUALITIES = [
+	"exotic",
+	"rare",
+	"common"
+], QB_LEVELS = [
 	[
 		0,
 		15,
@@ -2740,7 +2811,7 @@ const stands = new class {
 			}
 		}
 	}
-}(), core$2 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", readHotdog), shifts$1 = new class {
+}(), core$3 = resourceExport("ai-core"), hotdogSettings = panel.view("hotdog", readHotdog), shifts$1 = new class {
 	map = new PlayerMap({ onDrop: (_source, shift) => stands.remove(shift.stand) });
 	get(source) {
 		return this.map.get(source);
@@ -2750,7 +2821,7 @@ const stands = new class {
 			stand: stands.add(source, s.spawn, s.spawn.heading).id,
 			deposit,
 			account,
-			rep: int(record(core$2.GetMeta(source, "rep")).hotdog, 0, 0, 1e6),
+			rep: int(record(core$3.GetMeta(source, "rep")).hotdog, 0, 0, 1e6),
 			stock: {
 				exotic: 0,
 				rare: 0,
@@ -2762,7 +2833,7 @@ const stands = new class {
 	}
 	end(source, refund) {
 		let shift = this.map.get(source);
-		shift && (this.map.delete(source), stands.remove(shift.stand), refund && shift.deposit > 0 && core$2.AddMoney(source, shift.account, shift.deposit, "hotdog:deposit"), isOnline(source) && this.send(source, null));
+		shift && (this.map.delete(source), stands.remove(shift.stand), refund && shift.deposit > 0 && core$3.AddMoney(source, shift.account, shift.deposit, "hotdog:deposit"), isOnline(source) && this.send(source, null));
 	}
 	endAll() {
 		for (let source of this.map.keys()) this.end(source, !0);
@@ -2776,8 +2847,8 @@ const stands = new class {
 	}
 	addRep(source, shift, gain) {
 		let rep = Math.min(hotdogSettings.value.maxRep, shift.rep + gain);
-		rep !== shift.rep && (shift.rep = rep, core$2.SetMeta(source, "rep", {
-			...record(core$2.GetMeta(source, "rep")),
+		rep !== shift.rep && (shift.rep = rep, core$3.SetMeta(source, "rep", {
+			...record(core$3.GetMeta(source, "rep")),
 			hotdog: rep
 		}));
 	}
@@ -2802,7 +2873,56 @@ const stands = new class {
 			stand
 		} : "HOTDOG_ERR_FAR";
 	}
-}(), core$1 = resourceExport("ai-core");
+}(), core$2 = resourceExport("ai-core"), CUSTOMER_COOLDOWN_MS = 6e5, customers = new KeyedCooldowns(), sales = new Cooldowns();
+function customerAt(source, netId) {
+	let at = shifts$1.atStand(source, 5);
+	if (typeof at == "string") return at;
+	let ped = pedFromNet(netId);
+	return !ped || IsPedAPlayer(ped) || distance(entityCoords(ped), at.stand) > 6 || !customers.ready(netId) ? "HOTDOG_ERR_CUSTOMER" : at;
+}
+onClientCallback(HOTDOG_EVENTS.offer, { args: oneArg(readId) }, (source, netId) => {
+	if (!sales.ready(source)) return fail("HOTDOG_ERR_CUSTOMER");
+	let at = customerAt(source, netId);
+	if (typeof at == "string") return fail(at);
+	let { shift } = at, have = QUALITIES.filter((q) => shift.stock[q] > 0), quality = pickRandom(have);
+	if (!quality) return fail("HOTDOG_ERR_NO_DOGS");
+	let range = shifts$1.levelOf(shift).level?.prices[quality], count = randomInt(1, Math.min(3, shift.stock[quality])), price = range ? randomInt(range.min, range.max) : 1;
+	return shift.offer = {
+		netId,
+		quality,
+		count,
+		price,
+		until: GetGameTimer() + 6e4
+	}, {
+		ok: !0,
+		count,
+		price: count * price
+	};
+}), onClientCallback(HOTDOG_EVENTS.sell, {
+	args: oneArg(readId),
+	lock: !0
+}, (source, netId) => {
+	let at = customerAt(source, netId);
+	if (typeof at == "string") return fail(at);
+	let { shift } = at, offer = shift.offer;
+	if (shift.offer = null, !offer || offer.netId !== netId || GetGameTimer() > offer.until) return fail("HOTDOG_ERR_CUSTOMER");
+	if (shift.stock[offer.quality] < offer.count) return fail("HOTDOG_ERR_NO_DOGS");
+	shift.stock[offer.quality] -= offer.count, customers.start(netId, CUSTOMER_COOLDOWN_MS), sales.start(source, 3e3);
+	let total = offer.count * offer.price;
+	return core$2.AddMoney(source, hotdogSettings.value.payAccount, total, "hotdog:sale"), shifts$1.send(source, shift), notify(source, Locale("HOTDOG_SOLD", offer.count, total), "success"), aiLog("hotdog", `sold ${offer.count} hot dogs for $${total}`, {
+		source,
+		metadata: {
+			quality: offer.quality,
+			count: offer.count,
+			total
+		}
+	}), { ok: !0 };
+}), onClientEvent(HOTDOG_EVENTS.decline, (source) => {
+	let shift = shifts$1.get(source);
+	shift?.offer && (customers.start(shift.offer.netId, CUSTOMER_COOLDOWN_MS), shift.offer = null);
+});
+// resource/server/hotdog/index.ts
+const core$1 = resourceExport("ai-core");
 every(2e3, () => stands.follow(), { name: "hotdogFollow" }), onCharacter({
 	loaded: (source) => stands.start(source),
 	unloaded: (source) => stands.stop(source)

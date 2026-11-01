@@ -22,6 +22,8 @@ import { Locale } from "common";
 import { HOTDOG_EVENTS, type Quality } from "common/hotdog";
 import { hotdogSettings as settings, shifts } from "./shifts";
 import { FOLLOW_MS, stands } from "./stands";
+// The NPC sale callbacks (offer, sell, decline) the client calls.
+import "./sales";
 
 /** The hot dog stand (qb-hotdogjob): rent at the counter, push it, cook in skill checks; selling in `sales.ts`. */
 
