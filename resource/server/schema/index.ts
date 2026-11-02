@@ -1,4 +1,4 @@
-import type { PanelSchema } from "@aicore-fivem/shared";
+import type { PanelSchema } from "@aifivem/shared";
 import { hotdogFile, hotdogTab } from "./hotdog";
 import { routesFile, routesTab } from "./routes";
 import { stopsFile, stopsTab } from "./stops";

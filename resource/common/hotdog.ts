@@ -11,7 +11,7 @@ import {
   str,
   vec4,
   type Vec4,
-} from "@aicore-fivem/lib/shared";
+} from "@aifivem/lib/shared";
 
 /** The hot dog stand (port of qb-hotdogjob): contracts and panel content. No natives. */
 

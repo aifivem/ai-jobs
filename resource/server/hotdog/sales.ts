@@ -8,7 +8,7 @@ import {
   onClientEvent,
   pedFromNet,
   resourceExport,
-} from "@aicore-fivem/lib/server";
+} from "@aifivem/lib/server";
 import {
   distance,
   fail,
@@ -16,7 +16,7 @@ import {
   pickRandom,
   randomInt,
   readId,
-} from "@aicore-fivem/lib/shared";
+} from "@aifivem/lib/shared";
 import { Locale } from "common";
 import { HOTDOG_EVENTS, QUALITIES } from "common/hotdog";
 import { hotdogSettings as settings, shifts } from "./shifts";

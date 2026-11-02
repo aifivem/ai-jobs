@@ -4,8 +4,8 @@ import {
   BLIP_STYLE_FIELDS,
   PLACE_PED_SPEC,
   placePedFields,
-} from "@aicore-fivem/lib/shared";
-import type { FileSpec, TabSpec } from "@aicore-fivem/shared";
+} from "@aifivem/lib/shared";
+import type { FileSpec, TabSpec } from "@aifivem/shared";
 import { DEFAULT_TOW_MODELS } from "common/routes";
 import { gatherCard, vehicleCard } from "./routeCards";
 

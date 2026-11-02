@@ -1,4 +1,4 @@
-import type { CardSpec, WidgetSpec } from "@aicore-fivem/shared";
+import type { CardSpec, WidgetSpec } from "@aifivem/shared";
 
 const NEW_LEVEL = {
   rep: 0,

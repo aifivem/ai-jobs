@@ -5,8 +5,8 @@ import {
   createBlip,
   notify,
   Points,
-} from "@aicore-fivem/lib/client";
-import { isPublic, RecordObjects } from "@aicore-fivem/lib/shared";
+} from "@aifivem/lib/client";
+import { isPublic, RecordObjects } from "@aifivem/lib/shared";
 import { Locale } from "common";
 import { EVENTS, readRoute, type Route, type Shift } from "common/routes";
 import { world } from "../content";

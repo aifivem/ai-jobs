@@ -5,7 +5,7 @@ import {
   every,
   keyHints,
   player,
-} from "@aicore-fivem/lib/client";
+} from "@aifivem/lib/client";
 import { Locale } from "common";
 
 const PUSH_ANIM = { dict: "missfinale_c2ig_11", clip: "pushcar_offcliff_f" };

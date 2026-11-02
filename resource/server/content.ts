@@ -1,4 +1,4 @@
-import { AdminPanel } from "@aicore-fivem/lib/server";
+import { AdminPanel } from "@aifivem/lib/server";
 import { jobsSchema } from "./schema";
 
 /** ai-jobs' panel (routes, stops, the hot dog stand). */

@@ -4,8 +4,8 @@ import {
   BLIP_STYLE_FIELDS,
   PLACE_PED_SPEC,
   placePedFields,
-} from "@aicore-fivem/lib/shared";
-import type { FileSpec, TabSpec, WidgetSpec } from "@aicore-fivem/shared";
+} from "@aifivem/lib/shared";
+import type { FileSpec, TabSpec, WidgetSpec } from "@aifivem/shared";
 import { levelsCard, pricesCard } from "./hotdogLevels";
 
 /** The hot dog stand's panel file (one settings file: one counter, as qb-hotdogjob); its levels and prices cards are `hotdogLevels.ts`. */

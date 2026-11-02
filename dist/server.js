@@ -697,7 +697,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$30 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$31 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -711,7 +711,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$30.GetLookupValues(source);
+			list = core$31.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -977,7 +977,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panelFiles.ts
-const core$29 = resourceExport(CORE.resource);
+const core$30 = resourceExport(CORE.resource);
 var PanelFiles = class {
 	schema;
 	data = new Map();
@@ -1021,7 +1021,7 @@ var PanelFiles = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$29.AdminPanelChanged({
+		if (core$30.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -1043,7 +1043,7 @@ var PanelFiles = class {
 	}
 };
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$28 = resourceExport(CORE.resource);
+const core$29 = resourceExport(CORE.resource);
 var AdminPanel = class extends PanelFiles {
 	rules = new Map();
 	actions = new Map();
@@ -1052,7 +1052,7 @@ var AdminPanel = class extends PanelFiles {
 		super(schema), registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelData", () => this.dataSnapshot()), registerExport("AdminPanelSummary", () => this.summary()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
 			count: 4,
 			windowMs: 1e4
-		} }), setImmediate(() => core$28.RegisterAdminPanel(this.resource));
+		} }), setImmediate(() => core$29.RegisterAdminPanel(this.resource));
 	}
 	rule(file, rule) {
 		this.rules.set(file, rule);
@@ -1164,24 +1164,32 @@ function notify(source, text, kind = "info", duration, title) {
 	emitNet(LIB_UI.notifyEvent, source, notification);
 }
 // ../../../packages/lib/src/server/inventory.ts
-const core$27 = resourceExport(CORE.resource), inventory = {
-	addItem: (inv, item, count = 1, metadata, slot) => core$27.AddItem(inv, item, count, metadata, slot),
-	removeItem: (inv, item, count = 1, metadata, slot) => core$27.RemoveItem(inv, item, count, metadata, slot),
-	getItemCount: (inv, item, metadata) => core$27.GetItemCount(inv, item, metadata),
-	hasItem: (inv, item, count = 1) => core$27.HasItem(inv, item, count),
-	canCarryItem: (inv, item, count = 1, metadata) => core$27.CanCarryItem(inv, item, count, metadata),
-	getItems: (inv) => core$27.GetItems(inv),
-	clearInventory: (inv) => core$27.ClearInventory(inv),
-	registerStash: (name, label, slots, maxWeight, jobs = []) => core$27.RegisterStash(name, label, slots, maxWeight, jobs),
-	openInventory: (source, inv) => core$27.OpenInventory(source, inv),
-	registerUsableItem: (name, handler) => core$27.RegisterUsableItem(name, handler),
-	registerShop: (name, label, items) => core$27.RegisterShop(name, label, items),
-	openShop: (source, name) => core$27.OpenShop(source, name),
-	getItemDefinition: (name) => core$27.GetItemDefinition(name),
-	setItemMetadata: (inv, slot, metadata) => core$27.SetItemMetadata(inv, slot, metadata),
-	setMaxWeight: (source, grams) => core$27.SetMaxWeight(source, grams),
-	usableItems: () => core$27.GetUsableItems()
-}, core$26 = resourceExport(CORE.resource);
+const core$28 = resourceExport(CORE.resource), inventory = {
+	addItem: (inv, item, count = 1, metadata, slot) => core$28.AddItem(inv, item, count, metadata, slot),
+	removeItem: (inv, item, count = 1, metadata, slot) => core$28.RemoveItem(inv, item, count, metadata, slot),
+	getItemCount: (inv, item, metadata) => core$28.GetItemCount(inv, item, metadata),
+	hasItem: (inv, item, count = 1) => core$28.HasItem(inv, item, count),
+	canCarryItem: (inv, item, count = 1, metadata) => core$28.CanCarryItem(inv, item, count, metadata),
+	canCarryItems: (inv, items) => core$28.CanCarryItems(inv, items),
+	getItems: (inv) => core$28.GetItems(inv),
+	clearInventory: (inv) => core$28.ClearInventory(inv),
+	registerStash: (name, label, slots, maxWeight, jobs = []) => core$28.RegisterStash(name, label, slots, maxWeight, jobs),
+	openInventory: (source, inv) => core$28.OpenInventory(source, inv),
+	registerUsableItem: (name, handler) => core$28.RegisterUsableItem(name, handler),
+	registerShop: (name, label, items) => core$28.RegisterShop(name, label, items),
+	openShop: (source, name) => core$28.OpenShop(source, name),
+	getItemDefinition: (name) => core$28.GetItemDefinition(name),
+	itemsBySlot: (inv) => {
+		let out = {};
+		for (let stack of core$28.GetItems(inv) ?? []) out[stack.slot] = stack;
+		return out;
+	},
+	firstStack: (inv, item) => (core$28.GetItems(inv) ?? []).find((stack) => stack.name === item) ?? null,
+	getItemDefinitions: () => core$28.GetItemDefinitions() ?? {},
+	setItemMetadata: (inv, slot, metadata) => core$28.SetItemMetadata(inv, slot, metadata),
+	setMaxWeight: (source, grams) => core$28.SetMaxWeight(source, grams),
+	usableItems: () => core$28.GetUsableItems()
+}, core$27 = resourceExport(CORE.resource);
 function reindex(index, source, before, after) {
 	for (let name of before) {
 		let set = index.get(name);
@@ -1197,7 +1205,10 @@ var OnlineMirror = class {
 	onDuty = new Map();
 	jobIndex = new Map();
 	gangIndex = new Map();
+	byCitizenid = new Map();
+	jobListeners = new Set();
 	started = !1;
+	loading = !1;
 	start() {
 		if (this.started) return;
 		this.started = !0;
@@ -1209,23 +1220,44 @@ var OnlineMirror = class {
 				gangs: [],
 				gangNames: [],
 				duty: null
-			}), this.setJobs(source, core$26.GetJobs(source) ?? []), this.setGangs(source, core$26.GetGangs(source) ?? []), this.setDuty(source, core$26.GetDutyJob(source));
+			}), this.byCitizenid.set(character.citizenid, source), this.loading = !0, this.setJobs(source, core$27.GetJobs(source) ?? []), this.setGangs(source, core$27.GetGangs(source) ?? []), this.setDuty(source, core$27.GetDutyJob(source)), this.loading = !1;
+			let player = this.players.get(source);
+			player && this.emitJobs(source, player, [], null, !0);
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => this.setJobs(source, jobs)), on(CORE.gangsChangedEvent, (source, gangs) => this.setGangs(source, gangs)), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$26.GetLoadedSources()) {
-			let character = core$26.GetCharacter(source);
+		for (let source of core$27.GetLoadedSources()) {
+			let character = core$27.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
+	emitJobs(source, player, jobs, duty, online) {
+		if (this.jobListeners.size === 0) return;
+		let change = {
+			source,
+			citizenid: player.character.citizenid,
+			jobs: online ? player.jobs : [],
+			duty: online ? player.duty : null,
+			online,
+			previous: {
+				jobs,
+				duty
+			}
+		};
+		for (let listener of this.jobListeners) listener(change);
+	}
 	drop(source) {
 		let player = this.players.get(source);
-		player && (this.setDuty(source, null), reindex(this.jobIndex, source, player.jobNames, []), reindex(this.gangIndex, source, player.gangNames, []), this.players.delete(source));
+		if (!player) return;
+		let [jobs, duty] = [player.jobs, player.duty];
+		this.loading = !0, this.setDuty(source, null), this.loading = !1, this.emitJobs(source, player, jobs, duty, !1), reindex(this.jobIndex, source, player.jobNames, []), reindex(this.gangIndex, source, player.gangNames, []), this.byCitizenid.delete(player.character.citizenid), this.players.delete(source);
 	}
 	setJobs(source, jobs) {
 		let player = this.players.get(source);
 		if (!player) return;
 		let names = jobs.map((m) => m.job);
-		reindex(this.jobIndex, source, player.jobNames, names), player.jobs = jobs, player.jobNames = names;
+		reindex(this.jobIndex, source, player.jobNames, names);
+		let before = player.jobs;
+		player.jobs = jobs, player.jobNames = names, this.loading || this.emitJobs(source, player, before, player.duty, !0);
 	}
 	setGangs(source, gangs) {
 		let player = this.players.get(source);
@@ -1235,14 +1267,17 @@ var OnlineMirror = class {
 	}
 	setDuty(source, job) {
 		let player = this.players.get(source);
-		if (!player) return;
+		if (!player || player.duty === job) return;
+		let before = player.duty;
 		if (player.duty) {
 			let set = this.onDuty.get(player.duty);
 			set?.delete(source), set?.size === 0 && this.onDuty.delete(player.duty);
 		}
-		if (player.duty = job, !job) return;
-		let set = this.onDuty.get(job);
-		set || this.onDuty.set(job, set = new Set()), set.add(source);
+		if (player.duty = job, job) {
+			let set = this.onDuty.get(job);
+			set || this.onDuty.set(job, set = new Set()), set.add(source);
+		}
+		this.loading || this.emitJobs(source, player, player.jobs, before, !0);
 	}
 }, OnlinePlayers = class extends OnlineMirror {
 	sources() {
@@ -1253,6 +1288,15 @@ var OnlineMirror = class {
 	}
 	character(source) {
 		return this.start(), this.players.get(source)?.character ?? null;
+	}
+	sourceOf(citizenid) {
+		return this.start(), this.byCitizenid.get(citizenid) ?? null;
+	}
+	characters() {
+		this.start();
+		let out = new Map();
+		for (let [source, player] of this.players) out.set(source, player.character);
+		return out;
 	}
 	charId(source) {
 		return this.start(), this.players.get(source)?.character.id;
@@ -1306,14 +1350,40 @@ var OnlineMirror = class {
 		for (let job of jobs) count += this.onDuty.get(job)?.size ?? 0;
 		return count;
 	}
+	countMembers(jobs, onlyOnDuty = !1) {
+		if (onlyOnDuty) return this.countOnDuty(jobs);
+		this.start();
+		let count = 0;
+		for (let i = 0; i < jobs.length; i++) {
+			let set = this.jobIndex.get(jobs[i]);
+			if (set && (count += set.size, i !== 0)) {
+				for (let source of set) for (let k = 0; k < i; k++) if (this.jobIndex.get(jobs[k])?.has(source)) {
+					count--;
+					break;
+				}
+			}
+		}
+		return count;
+	}
+	membersOf(jobs, onlyOnDuty = !1) {
+		this.start();
+		let index = onlyOnDuty ? this.onDuty : this.jobIndex;
+		if (jobs.length === 1) return [...index.get(jobs[0]) ?? EMPTY];
+		let seen = new Set();
+		for (let job of jobs) for (let source of index.get(job) ?? EMPTY) seen.add(source);
+		return [...seen];
+	}
+	onJobState(listener) {
+		return this.start(), this.jobListeners.add(listener), () => this.jobListeners.delete(listener);
+	}
 	onDutyFor(job) {
 		return this.start(), this.onDuty.get(job) ?? EMPTY;
 	}
 };
-const EMPTY = new Set(), online = new OnlinePlayers(), core$25 = resourceExport(CORE.resource), vehicleKeys = {
-	give: (source, vehicle, purpose = "temporary") => core$25.GiveVehicleKeys(source, vehicle, purpose),
-	remove: (source, vehicle) => core$25.RemoveVehicleKeys(source, vehicle),
-	has: (source, vehicle) => core$25.HasVehicleKeys(source, vehicle)
+const EMPTY = new Set(), online = new OnlinePlayers(), core$26 = resourceExport(CORE.resource), vehicleKeys = {
+	give: (source, vehicle, purpose = "temporary") => core$26.GiveVehicleKeys(source, vehicle, purpose),
+	remove: (source, vehicle) => core$26.RemoveVehicleKeys(source, vehicle),
+	has: (source, vehicle) => core$26.HasVehicleKeys(source, vehicle)
 }, TYPES = new Set([
 	"automobile",
 	"bike",
@@ -1333,10 +1403,10 @@ async function vehicleType(model, asker) {
 	return first !== void 0 && first !== asker ? (types.set(hash, answer), votes.delete(hash)) : (seen.set(answer, asker), votes.set(hash, seen)), answer;
 }
 // ../../../packages/lib/src/server/fuel.ts
-const core$24 = resourceExport(CORE.resource), fuel = {
-	get: (vehicle) => core$24.GetVehicleFuel(vehicle),
-	set: (vehicle, level) => core$24.SetVehicleFuel(vehicle, level),
-	provider: () => core$24.GetFuelSystem()
+const core$25 = resourceExport(CORE.resource), fuel = {
+	get: (vehicle) => core$25.GetVehicleFuel(vehicle),
+	set: (vehicle, level) => core$25.SetVehicleFuel(vehicle, level),
+	provider: () => core$25.GetFuelSystem()
 };
 function randomPlate(prefix) {
 	let digit = () => String(Math.floor(Math.random() * 10));
@@ -1692,7 +1762,7 @@ function progressFor(source, options) {
 	});
 }
 // ../../../packages/lib/src/server/definitions.ts
-const core$22 = resourceExport("ai-core");
+const core$23 = resourceExport("ai-core");
 new class {
 	jobs = new Map();
 	gangs = new Map();
@@ -1703,23 +1773,23 @@ new class {
 	}
 	job(name) {
 		let def = this.jobs.get(name);
-		return def === void 0 && this.jobs.set(name, def = core$22.GetJobDefinition(name) ?? null), def;
+		return def === void 0 && this.jobs.set(name, def = core$23.GetJobDefinition(name) ?? null), def;
 	}
 	registerJob(name, definition) {
-		return core$22.RegisterJobDefinition(name, definition);
+		return core$23.RegisterJobDefinition(name, definition);
 	}
 	removeJob(name) {
-		return core$22.RemoveJobDefinition(name);
+		return core$23.RemoveJobDefinition(name);
 	}
 	registerGang(name, definition) {
-		return core$22.RegisterGangDefinition(name, definition);
+		return core$23.RegisterGangDefinition(name, definition);
 	}
 	removeGang(name) {
-		return core$22.RemoveGangDefinition(name);
+		return core$23.RemoveGangDefinition(name);
 	}
 	gang(name) {
 		let def = this.gangs.get(name);
-		return def === void 0 && this.gangs.set(name, def = core$22.GetGangDefinition(name) ?? null), def;
+		return def === void 0 && this.gangs.set(name, def = core$23.GetGangDefinition(name) ?? null), def;
 	}
 }();
 async function minigameFor(source, options) {
@@ -1923,7 +1993,7 @@ function every(ms, fn, options = {}) {
 	let job = new ScheduledJob(Math.max(0, Math.floor(ms)), fn, options.name ?? (fn.name || "anonymous"));
 	return options.active !== !1 && job.set(!0), job;
 }
-IsDuplicityVersion(), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+IsDuplicityVersion(), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/index.ts
 function isOnline(source) {
 	return !!GetPlayerName(String(source));

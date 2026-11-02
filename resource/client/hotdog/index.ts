@@ -3,7 +3,7 @@ import {
   onMembershipChange,
   onServerEvent,
   onStop,
-} from "@aicore-fivem/lib/client";
+} from "@aifivem/lib/client";
 import { Locale } from "common";
 import { HOTDOG_EVENTS, toHotdogView, toStandView } from "common/hotdog";
 import { world } from "../content";

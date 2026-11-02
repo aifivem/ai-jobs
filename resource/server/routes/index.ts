@@ -5,13 +5,13 @@ import {
   online,
   onStop,
   spawnVehicle,
-} from "@aicore-fivem/lib/server";
+} from "@aifivem/lib/server";
 import {
   fail,
   oneArg,
   readText,
   RecordObjects,
-} from "@aicore-fivem/lib/shared";
+} from "@aifivem/lib/shared";
 import { readRoute, readStop, EVENTS } from "common/routes";
 import { panel } from "../content";
 import { arrive } from "./arrive";
