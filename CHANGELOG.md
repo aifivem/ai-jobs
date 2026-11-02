@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/aifivem/ai-jobs/compare/v0.1.4...v0.1.5) (2026-11-02)
+
+
+### Documentation
+
+* install from the release zip ([210541f](https://github.com/aifivem/ai-jobs/commit/210541f4b10c49446af33ffffaa3430b59411e2d))
+
+
+### Miscellaneous Chores
+
+* build files are no longer in git, the release zip carries them ([2a24cbc](https://github.com/aifivem/ai-jobs/commit/2a24cbca97f55cefc4f070d9b84c723b611aec2e))
+
 ## [0.1.4](https://github.com/aifivem/ai-jobs/compare/v0.1.3...v0.1.4) (2026-11-02)
 
 
